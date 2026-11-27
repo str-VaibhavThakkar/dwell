@@ -1,0 +1,563 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Desk Dock</title>
+<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/dock/dock.css">
+</head><body>
+<canvas id="sky"></canvas><canvas id="scene"></canvas><canvas id="fx"></canvas>
+<div id="shade"></div>
+
+<!-- Visual Feedback Toast & Floating Page Navigation -->
+<div id="hwToast" class="hw-toast"></div>
+<div id="pageNavContainer" class="page-nav-container">
+  <button id="navBtnPrev" class="nav-arrow-btn" aria-label="Previous Page">&#x25C0;</button>
+  <div id="pageBadge" class="page-badge">Dashboard [1/7]</div>
+  <button id="navBtnNext" class="nav-arrow-btn" aria-label="Next Page">&#x25B6;</button>
+  <button id="btnNavDrawer" class="nav-icon-btn" aria-label="Apps" title="App Drawer">&#x229E;</button>
+  <button id="btnNavSettings" class="nav-icon-btn" aria-label="Settings" title="Settings">&#x2699;</button>
+</div>
+
+<!-- Full-Screen Glowing Alarm Ringing Overlay -->
+<div id="alarmOverlay" class="alarm-overlay hidden" aria-hidden="true">
+  <div class="alarm-halo-glow"></div>
+  <div class="alarm-content">
+    <div class="alarm-status-pill">
+      <span class="alarm-pulse-dot"></span>
+      <span class="alarm-status-text">ALARM RINGING</span>
+    </div>
+    <div id="alarmTagDisplay" class="alarm-tag-display">MORNING ROUTINE</div>
+    <div id="alarmTriggerInfo" class="alarm-trigger-info">Dynamic Sunrise · 06:38 AM</div>
+    <div class="alarm-sound-box">
+      <span class="alarm-sound-icon">♪</span>
+      <span id="alarmSoundDisplay">homecoming.mp3</span>
+    </div>
+    <div id="alarmDismissBox" class="alarm-dismiss-box" role="button" tabindex="0">
+      <span class="alarm-key-badge">STOP</span>
+      <span class="alarm-dismiss-instruction">TAP OR WAVE HAND TO STOP</span>
+    </div>
+  </div>
+</div>
+
+<div id="ui">
+  <!-- PAGE 1 [1/7]: Clock & Weather Dashboard -->
+  <div id="page-clock" class="dock-page active">
+    <header><span id="place">—</span><span id="status"></span></header>
+    <section id="clock">
+      <div id="date"></div>
+      <div id="time"><span id="hh">--</span><span class="sep">:</span><span id="mm">--</span><span id="ampm" class="ampm"></span></div>
+    </section>
+    <section id="panel">
+      <div id="wxNow">
+        <span id="temp"></span>
+        <div><div id="condBig"></div><div id="hilo"></div></div>
+      </div>
+      <div id="slot"></div>
+    </section>
+    <footer><div id="ticker"></div><div id="dots"></div></footer>
+  </div>
+
+  <!-- PAGE 2 [2/7]: Alarms & Astronomical Schedule -->
+  <div id="page-alarms" class="dock-page">
+    <header>
+      <span class="mono">Alarms & Schedule</span>
+      <div class="header-actions">
+        <span id="alarmsSummary" class="preset-tag">0 active</span>
+        <button id="btnOpenAddAlarm" class="btn-tactile primary sm" type="button">+ Add Alarm</button>
+      </div>
+    </header>
+    <!-- Warning banner if exact alarms or battery optimization is not configured -->
+    <div id="alarmWarningBanner" class="perm-warning-banner hidden">
+      <span class="warn-icon">⚠</span>
+      <span id="alarmWarningText">Exact alarm permission disabled. Tap to enable.</span>
+      <button id="btnFixAlarmPerm" class="btn-tactile text-btn sm" type="button">Fix</button>
+    </div>
+    <section class="alarms-center">
+      <ul id="fullAlarmList" class="alarms-grid-list"></ul>
+    </section>
+  </div>
+
+  <!-- PAGE 3 [3/7]: Focus & Pomodoro Timer -->
+  <div id="page-focus" class="dock-page">
+    <header><span class="mono">Focus Timer</span><span id="focusPresetLabel" class="preset-tag">25m Preset</span></header>
+    <section class="focus-center">
+      <div id="focusDigits" class="focus-digits" role="button" tabindex="0">25:00</div>
+      <div id="focusState" class="focus-state">Paused · Tap digits or Start to begin</div>
+      
+      <!-- Direct Duration Presets -->
+      <div class="focus-presets">
+        <button class="btn-preset active" data-preset="15">15m</button>
+        <button class="btn-preset" data-preset="25">25m</button>
+        <button class="btn-preset" data-preset="45">45m</button>
+        <button class="btn-preset" data-preset="60">60m</button>
+      </div>
+
+      <!-- Touch Controls -->
+      <div class="focus-touch-controls">
+        <button id="btnTouchFocusStart" class="btn-tactile sage" type="button">▶ Start</button>
+        <button id="btnTouchFocusReset" class="btn-tactile rose" type="button">↺ Reset</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE 4 [4/7]: Study Tasks Checklist -->
+  <div id="page-tasks" class="dock-page">
+    <header><span class="mono">Study Tasks</span><span id="tasksSummary" class="preset-tag">0 open</span></header>
+    <section class="tasks-center">
+      <!-- Inline Quick-Add Task Bar -->
+      <form id="taskAddForm" class="task-add-form" onsubmit="event.preventDefault(); addNewTask();">
+        <input type="text" id="newTaskInput" placeholder="+ Add a new task..." autocomplete="off">
+        <button type="submit" class="btn-tactile primary sm">Add</button>
+      </form>
+      <ul id="fullTaskList" class="tasks-checklist"></ul>
+      <div class="tasks-bottom-actions">
+        <button id="btnTouchTaskClear" class="btn-tactile text-btn sm hidden" type="button">Clear Completed</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE 5 [5/7]: Mirror Mode -->
+  <div id="page-mirror" class="dock-page">
+    <video id="mirrorVideo" autoplay playsinline muted></video>
+    <div id="mirrorPermCard" class="mirror-card hidden">
+      <div class="mirror-card-icon">📷</div>
+      <div class="mirror-card-title">Front Camera Access</div>
+      <div class="mirror-card-sub" id="mirrorPermMsg">Desk Dock needs camera permission to display the live mirror viewfinder.</div>
+      <button id="btnReqCameraPerm" class="btn-tactile primary" type="button">Enable Camera Access</button>
+    </div>
+    <div class="mirror-hint">Tap anywhere to exit</div>
+  </div>
+
+  <!-- PAGE 6 [6/7]: System & Hardware Telemetry -->
+  <div id="page-stats" class="dock-page">
+    <header><span class="mono">Telemetry & Power</span><span id="sysDeviceLabel" class="preset-tag">Universal Dock</span></header>
+    <section class="stats-center">
+      <div class="stats-grid">
+        <div class="stats-card" id="cardBat"><div class="lbl">Battery</div><div id="statBat" class="val">--%</div><div id="statCharging" class="sub">Battery Safe</div></div>
+        <div class="stats-card" id="cardTemp"><div class="lbl">Temperature</div><div id="statTemp" class="val">-- °C</div><div id="statTempSub" class="sub">Normal</div></div>
+        <div class="stats-card" id="cardLoad"><div class="lbl">PC Load</div><div id="statCpu" class="val">--% CPU</div><div id="statRam" class="sub">--% RAM</div></div>
+        <div class="stats-card" id="cardGuard"><div class="lbl">Charge Guard</div><div id="statGuardMode" class="val">Active</div><div class="sub" id="statGuardSub">Hardware Protected</div></div>
+      </div>
+      <div class="stats-touch-actions">
+        <button id="btnTouchStatsRefresh" class="btn-tactile slate sm" type="button">↺ Refresh Metrics</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE 7 [7/7]: On-Device Settings Hub -->
+  <div id="page-settings" class="dock-page">
+    <header><span class="mono">Dock Settings</span><span class="preset-tag">Universal Hub</span></header>
+    <section class="settings-scroll-area">
+
+      <!-- Home Screen Launcher -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="settings-card-title">Home Screen Launcher</span>
+          <span id="launcherStatusBadge" class="status-badge">Checking...</span>
+        </div>
+        <p id="launcherStatusDetail" class="settings-card-desc">Set Desk Dock as your default Android home launcher, or switch back to your stock launcher anytime.</p>
+        <div class="settings-btn-row">
+          <button id="btnSetAsLauncher" class="btn-tactile primary sm" type="button">Set as Default Launcher</button>
+          <button id="btnSwitchLauncher" class="btn-tactile slate sm" type="button">Switch to Stock Launcher</button>
+        </div>
+      </div>
+
+      <!-- Background Reliability & Battery -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="settings-card-title">Background Reliability & Battery</span>
+          <span id="batteryStatusBadge" class="status-badge">Checking...</span>
+        </div>
+        <p class="settings-card-desc">Android Doze and vendor power managers kill background apps by default. Configure these settings so the clock, alarms, and LAN hub run reliably.</p>
+        
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Battery Optimization</div>
+            <div id="batteryStatusDetail" class="setting-sub">Allow Desk Dock to run unrestricted in the background.</div>
+          </div>
+          <button id="btnBatteryOpt" class="btn-tactile sage sm" type="button">Manage</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">OEM Auto-Start</div>
+            <div class="setting-sub">Essential for Xiaomi / MIUI, Samsung, Oppo & Vivo to permit auto-boot and background services.</div>
+          </div>
+          <button id="btnAutoStart" class="btn-tactile slate sm" type="button">Open Settings</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">System App Info & Permissions</div>
+            <div class="setting-sub">View application permissions, notification channels, and details in Android Settings.</div>
+          </div>
+          <button id="btnAppInfo" class="btn-tactile slate sm" type="button">App Info</button>
+        </div>
+      </div>
+
+      <!-- Display & Fullscreen Mode -->
+      <div class="settings-card">
+        <span class="settings-card-title">Display & Screen</span>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Immersive Fullscreen</div>
+            <div class="setting-sub">Hide Android status and navigation bars. Swipe from edge to reveal transient bars.</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="settingFullscreenToggle" checked onchange="toggleImmersiveFullscreen(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Display Type</div>
+            <div class="setting-sub">OLED applies pure black & anti-retention micro-drift. LCD maintains hourly pulse.</div>
+          </div>
+          <select id="settingDisplayType" class="settings-select" onchange="updateDisplayType(this.value)">
+            <option value="auto">Auto-Detect</option>
+            <option value="oled">AMOLED / OLED</option>
+            <option value="lcd">IPS LCD</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Screen Sleep Timeout</div>
+            <div class="setting-sub">Shorter timeouts prevent static display fatigue.</div>
+          </div>
+          <select id="settingTimeoutSel" class="settings-select" onchange="updateScreenTimeout(+this.value)">
+            <option value="60">1 min (Recommended)</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+            <option value="1800">30 min (Study mode)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Themes & Wallpapers -->
+      <div class="settings-card">
+        <span class="settings-card-title">Visual Scene & Theme</span>
+        <p class="settings-card-desc">Select the active ambient background for your dashboard:</p>
+        <div class="theme-palette-grid">
+          <button class="btn-theme-opt active" data-scene="0">Dynamic Sky (Real-time Sun & Stars)</button>
+          <button class="btn-theme-opt" data-scene="1">Green Meadow</button>
+          <button class="btn-theme-opt" data-scene="2">Mountain Lake</button>
+          <button class="btn-theme-opt" data-scene="3">Silk Abstract</button>
+          <button class="btn-theme-opt" data-scene="4">Ambient Dark</button>
+          <button class="btn-theme-opt" data-scene="5">Pure AMOLED Black</button>
+        </div>
+      </div>
+
+      <!-- Clock & Regional Format -->
+      <div class="settings-card">
+        <span class="settings-card-title">Clock & Location</span>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Clock Format</div>
+            <div class="setting-sub">Choose 12-hour (AM/PM) or 24-hour military format</div>
+          </div>
+          <div class="seg-btn-group">
+            <button class="btn-seg active" id="btnFmt12" type="button" onclick="setTimeFormat('12h')">12h</button>
+            <button class="btn-seg" id="btnFmt24" type="button" onclick="setTimeFormat('24h')">24h</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Weather Location</div>
+            <div id="settingLocationLabel" class="setting-sub">New Delhi (28.61, 77.21)</div>
+          </div>
+          <button id="btnDetectLocation" class="btn-tactile slate sm" type="button" onclick="resolveDynamicLocation(true)">Auto-Detect</button>
+        </div>
+      </div>
+
+      <!-- Night Mode Schedule -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <span class="settings-card-title">Night Mode</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="settingNightModeToggle" checked onchange="toggleNightMode(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="settings-card-desc">Sets brightness to minimum and silences hourly wake pulses for uninterrupted sleep.</p>
+        <div class="settings-row" id="settingNightScheduleRow">
+          <div>
+            <div class="setting-title">Quiet Hours Schedule</div>
+            <div class="setting-sub">Night mode activation window</div>
+          </div>
+          <div class="time-range-picker">
+            <select id="settingNightStart" class="settings-select sm" onchange="updateNightSchedule()">
+              <option value="21">9:00 PM</option>
+              <option value="22">10:00 PM</option>
+              <option value="23" selected>11:00 PM</option>
+              <option value="0">12:00 AM</option>
+            </select>
+            <span class="range-to">to</span>
+            <select id="settingNightEnd" class="settings-select sm" onchange="updateNightSchedule()">
+              <option value="5">5:00 AM</option>
+              <option value="6" selected>6:00 AM</option>
+              <option value="7">7:00 AM</option>
+              <option value="8">8:00 AM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Mode -->
+      <div class="settings-card">
+        <span class="settings-card-title">Navigation & Input Mode</span>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Input Controls</div>
+            <div class="setting-sub">Choose whether physical volume buttons cycle pages or standard touch gestures only.</div>
+          </div>
+          <select id="settingNavMode" class="settings-select" onchange="updateNavMode(this.value)">
+            <option value="touch">Touch Gestures Only (Daily Driver)</option>
+            <option value="both">Both (Touch + Physical Volume Rocker)</option>
+            <option value="buttons">Hardware Buttons Only (Headless / Broken Touch)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- LAN Control Hub & Diagnostics -->
+      <div class="settings-card">
+        <span class="settings-card-title">Remote PC Hub & Diagnostics</span>
+        <p class="settings-card-desc">Access the companion web control hub from any computer browser on your local Wi-Fi:</p>
+        <div class="hub-url-box">
+          <div id="settingHubUrl" class="hub-url-text">http://...</div>
+          <button id="btnCopyHubUrl2" class="btn-tactile sage sm" type="button">Copy URL</button>
+        </div>
+        <div class="settings-btn-row" style="margin-top: 14px;">
+          <button id="btnExportDiagnostics" class="btn-tactile slate sm" type="button" onclick="exportDiagnostics()">Export Diagnostics Report</button>
+          <button id="btnOpenSetupWizard" class="btn-tactile text-btn sm" type="button" onclick="openSetupWizard()">Run Setup Wizard</button>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</div>
+
+<!-- On-Device Modal: + Add Alarm Sheet -->
+<div id="addAlarmModal" class="dock-modal-overlay hidden" aria-hidden="true">
+  <div class="dock-modal-card">
+    <div class="dock-modal-header">
+      <span class="dock-modal-title">New Alarm</span>
+      <button class="btn-modal-close" type="button" onclick="closeAddAlarmModal()">&#x2715;</button>
+    </div>
+    <form id="addAlarmForm" onsubmit="event.preventDefault(); submitNewAlarm();">
+      <div class="form-group">
+        <label class="form-lbl">Alarm Type</label>
+        <select id="alarmTypeInput" class="settings-select" onchange="onAlarmTypeChanged(this.value)">
+          <option value="fixed">Fixed Time</option>
+          <option value="sunrise">Astronomical Sunrise</option>
+          <option value="sunset">Astronomical Sunset</option>
+        </select>
+      </div>
+      <div class="form-group" id="fixedTimeGroup">
+        <label class="form-lbl">Time</label>
+        <input type="time" id="alarmTimeInput" class="form-input" value="07:00" required>
+      </div>
+      <div class="form-group hidden" id="offsetTimeGroup">
+        <label class="form-lbl">Offset Minutes (- before, + after)</label>
+        <input type="number" id="alarmOffsetInput" class="form-input" value="0" min="-120" max="120">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Label / Tag</label>
+        <input type="text" id="alarmTagInput" class="form-input" placeholder="e.g. Morning Routine, Study Call" required>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Repeat Days (Empty = One-time)</label>
+        <div class="day-picker">
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="1"><span>M</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="2"><span>T</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="3"><span>W</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="4"><span>T</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="5"><span>F</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="6"><span>S</span></label>
+          <label class="day-opt"><input type="checkbox" name="alarmDay" value="7"><span>S</span></label>
+        </div>
+      </div>
+      <div class="dock-modal-footer">
+        <button type="button" class="btn-tactile slate" onclick="closeAddAlarmModal()">Cancel</button>
+        <button type="submit" class="btn-tactile primary">Save Alarm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- On-Device Modal: Minimal App Drawer Sheet -->
+<div id="appDrawerModal" class="dock-modal-overlay hidden" aria-hidden="true">
+  <div class="dock-modal-card app-drawer-card">
+    <div class="dock-modal-header">
+      <span class="dock-modal-title">Apps</span>
+      <button class="btn-modal-close" type="button" onclick="closeAppDrawer()">&#x2715;</button>
+    </div>
+    <div class="app-search-box">
+      <input type="search" id="appSearchInput" placeholder="Search installed apps..." oninput="filterAppDrawer(this.value)" autocomplete="off">
+    </div>
+    <div id="appDrawerGrid" class="app-drawer-grid">
+      <!-- Populated dynamically via AndroidBridge.getInstalledApps() -->
+    </div>
+  </div>
+</div>
+
+<!-- Setup Wizard Overlay (First-run or manual trigger) -->
+<div id="setupWizard" class="setup-wizard-overlay hidden" aria-hidden="true">
+  <div class="setup-card">
+    <div class="setup-header">
+      <div class="setup-title-box">
+        <span class="setup-badge">THING DOCK SETUP</span>
+        <h2 id="setupStepTitle">Welcome to Desk Dock</h2>
+      </div>
+      <button id="btnSkipSetup" class="btn-tactile text-btn" type="button">Skip</button>
+    </div>
+
+    <!-- Step 1: Operation Mode -->
+    <div id="setupStep1" class="setup-step active">
+      <p class="setup-desc">Choose how you plan to use this Android device:</p>
+      <div class="setup-options">
+        <label class="setup-opt active" id="optOpModeDock">
+          <input type="radio" name="setupOpMode" value="dock" checked>
+          <div class="setup-opt-content">
+            <span class="setup-opt-title">Dedicated Desk Dock (Default)</span>
+            <span class="setup-opt-sub">Fullscreen kiosk, always-on glanceable clock & weather, display sleep/wake automation.</span>
+          </div>
+        </label>
+        <label class="setup-opt" id="optOpModeDaily">
+          <input type="radio" name="setupOpMode" value="daily">
+          <div class="setup-opt-content">
+            <span class="setup-opt-title">Daily Driver Coexistence</span>
+            <span class="setup-opt-sub">Use on your desk while preserving normal back navigation, system status bars, and app switching.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 2: Navigation Mode -->
+    <div id="setupStep2" class="setup-step">
+      <p class="setup-desc">How would you like to interact with the dock?</p>
+      <div class="setup-options">
+        <label class="setup-opt active" id="optNavTouch">
+          <input type="radio" name="setupNavMode" value="touch" checked>
+          <div class="setup-opt-content">
+            <span class="setup-opt-title">Touchscreen & Tap Gestures Only (Recommended)</span>
+            <span class="setup-opt-sub">Standard modern touch navigation without intercepting volume buttons.</span>
+          </div>
+        </label>
+        <label class="setup-opt" id="optNavBoth">
+          <input type="radio" name="setupNavMode" value="both">
+          <div class="setup-opt-content">
+            <span class="setup-opt-title">Both (Touch Gestures + Hardware Buttons)</span>
+            <span class="setup-opt-sub">Swipe left/right and tap on-screen, or use physical volume buttons.</span>
+          </div>
+        </label>
+        <label class="setup-opt" id="optNavButtons">
+          <input type="radio" name="setupNavMode" value="buttons">
+          <div class="setup-opt-content">
+            <span class="setup-opt-title">Hardware Volume Buttons Only</span>
+            <span class="setup-opt-sub">Designed for devices with broken digitizers or hands-free dock stands.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 3: PC Control Hub -->
+    <div id="setupStep3" class="setup-step">
+      <p class="setup-desc">Connect from your computer browser on the same Wi-Fi network:</p>
+      <div class="setup-hub-box">
+        <div id="setupQrCode" class="setup-qr-box"></div>
+        <div class="setup-hub-meta">
+          <div class="setup-hub-url" id="setupHubUrl">http://...</div>
+          <button id="btnCopyHubUrl" class="btn-tactile sage" type="button">Copy URL</button>
+          <span class="setup-hub-hint">Token is pre-filled for secure LAN access.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Proximity & Wave Gestures -->
+    <div id="setupStep4" class="setup-step">
+      <p class="setup-desc">Air Wave Gesture Sensor Check:</p>
+      <div class="setup-sensor-panel">
+        <div class="sensor-row">
+          <span class="sensor-lbl">Proximity Distance:</span>
+          <span id="setupSensorDist" class="sensor-val">-- cm</span>
+        </div>
+        <div class="sensor-row">
+          <span class="sensor-lbl">Ambient Light:</span>
+          <span id="setupSensorLux" class="sensor-val">-- lux</span>
+        </div>
+        <div id="setupSensorBar" class="sensor-progress-bar"><div id="setupSensorFill" class="sensor-fill"></div></div>
+        <p class="setup-sensor-hint">Wave your hand within 5 cm of the top sensor to test wave-to-wake / wave-to-sleep.</p>
+      </div>
+    </div>
+
+    <!-- Wizard Footer Controls -->
+    <div class="setup-footer">
+      <button id="btnSetupPrev" class="btn-tactile slate disabled" type="button">Back</button>
+      <div class="setup-dots" id="setupDots">
+        <i class="on"></i><i></i><i></i><i></i>
+      </div>
+      <button id="btnSetupNext" class="btn-tactile primary" type="button">Next Step</button>
+    </div>
+  </div>
+</div>
+
+<!-- On-Device Modal: First-Run Permissions & Launcher Setup -->
+<div id="firstRunModal" class="dock-modal-overlay hidden" aria-hidden="true">
+  <div class="dock-modal-card first-run-card">
+    <div class="dock-modal-header">
+      <div>
+        <span class="first-run-tag">FIRST-RUN CONFIGURATION</span>
+        <span class="dock-modal-title">Welcome to Desk Dock</span>
+      </div>
+      <button class="btn-modal-close" type="button" onclick="dismissFirstRunModal()">&#x2715;</button>
+    </div>
+    
+    <div class="first-run-body">
+      <!-- 1. Default Launcher -->
+      <div class="first-run-section">
+        <div class="section-head">
+          <span class="section-title">1. Home Screen Launcher</span>
+          <span id="firstRunLauncherBadge" class="status-badge">Checking...</span>
+        </div>
+        <p class="section-desc">Desk Dock can act as your default home screen for a glanceable desk clock. You can switch back to your stock launcher anytime from Dock Settings.</p>
+        <div id="firstRunCurrentLauncher" class="current-info">Current: Checking...</div>
+        <div class="first-run-btn-row">
+          <button id="btnFirstRunSetLauncher" class="btn-tactile primary sm" type="button">Set as Default Launcher</button>
+          <button id="btnFirstRunKeepLauncher" class="btn-tactile slate sm" type="button">Keep Current Launcher</button>
+        </div>
+      </div>
+
+      <!-- 2. Battery Optimization -->
+      <div class="first-run-section">
+        <div class="section-head">
+          <span class="section-title">2. Background & Battery</span>
+          <span id="firstRunBatteryBadge" class="status-badge">Checking...</span>
+        </div>
+        <p class="section-desc">Android Doze kills background apps. Disabling battery optimization ensures the clock, alarms, and LAN hub run uninterrupted.</p>
+        <div class="first-run-btn-row">
+          <button id="btnFirstRunBatteryOpt" class="btn-tactile sage sm" type="button">Disable Battery Optimization</button>
+        </div>
+      </div>
+
+      <!-- 3. OEM Auto-Start -->
+      <div class="first-run-section">
+        <div class="section-head">
+          <span class="section-title">3. OEM Auto-Start</span>
+          <span class="status-badge">MIUI / One UI / ColorOS</span>
+        </div>
+        <p class="section-desc">Xiaomi, Samsung, Oppo, Vivo, and OnePlus block background startup. Tap to enable autostart in system settings.</p>
+        <div class="first-run-btn-row">
+          <button id="btnFirstRunAutoStart" class="btn-tactile slate sm" type="button">Open Auto-Start Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock-modal-footer">
+      <button id="btnFirstRunDismiss" class="btn-tactile primary" type="button" onclick="dismissFirstRunModal()">Got It & Continue</button>
+    </div>
+  </div>
+</div>
+
+<script src="/lib/suncalc.js"></script>
+<script src="/dock/sky.js"></script>
+<script src="/dock/scene.js"></script>
+<script src="/dock/dock.js"></script>
+</body></html>

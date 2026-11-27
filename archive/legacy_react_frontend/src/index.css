@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@layer base {
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    color: #E6E2DD;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* =========================================================================
+   GPU-COMPOSITED AMBIENT ENGINE (Strictly transform3d & opacity only)
+   ========================================================================= */
+
+/* --- Twinkling Starfield --- */
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.15; transform: translate3d(0, 0, 0) scale(0.85); }
+  50%      { opacity: 0.88; transform: translate3d(0, 0, 0) scale(1.2); }
+}
+.animate-twinkle {
+  animation: starTwinkle var(--tw-dur, 4.5s) ease-in-out infinite var(--tw-del, 0s);
+  will-change: transform, opacity;
+}
+
+/* --- Subtle Shooting Star (Abstract & Ambient Night) --- */
+@keyframes shootingStar {
+  0%   { transform: translate3d(0, 0, 0) rotate(-32deg) scaleX(0); opacity: 0; }
+  12%  { transform: translate3d(-50px, 32px, 0) rotate(-32deg) scaleX(1); opacity: 0.7; }
+  26%  { transform: translate3d(-160px, 102px, 0) rotate(-32deg) scaleX(0.1); opacity: 0; }
+  100% { transform: translate3d(-160px, 102px, 0) rotate(-32deg) scaleX(0); opacity: 0; }
+}
+.animate-shooting-star {
+  animation: shootingStar 18s ease-in-out infinite 3s;
+  will-change: transform, opacity;
+}
+
+/* --- Painterly Silk Wave Drift --- */
+@keyframes silkWaveA {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-20%, 0, 0); }
+}
+@keyframes silkWaveB {
+  0%   { transform: translate3d(-20%, 2px, 0); }
+  100% { transform: translate3d(0, -2px, 0); }
+}
+.animate-silk-a {
+  animation: silkWaveA 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.animate-silk-b {
+  animation: silkWaveB 34s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* --- Feathered Optical Rain Veil (Zero white dots, tapered at both ends) --- */
+.rain-veil-drop {
+  position: absolute;
+  top: -140px;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+@keyframes featheredRain {
+  0% {
+    transform: rotate(14deg) translate3d(0, -80px, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: var(--drop-op, 0.82);
+  }
+  85% {
+    opacity: var(--drop-op, 0.82);
+  }
+  100% {
+    transform: rotate(14deg) translate3d(0, 1000px, 0);
+    opacity: 0;
+  }
+}
+.animate-feathered-rain {
+  animation: featheredRain var(--rain-dur, 0.46s) linear infinite var(--rain-del, 0s);
+}
+
+/* --- Lake Surface Rain Ripples --- */
+@keyframes waterRipple {
+  0%   { transform: scale(0.2); opacity: 0.55; }
+  70%  { opacity: 0.22; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.animate-ripple {
+  animation: waterRipple var(--rip-dur, 1.4s) ease-out infinite var(--rip-del, 0s);
+  will-change: transform, opacity;
+}
+
+/* --- Forked Lightning Bolt & Violet Sky Flash --- */
+@keyframes lightningBolt {
+  0%, 91%, 94%, 96.5%, 100% { opacity: 0; }
+  92%   { opacity: 0.95; }
+  93%   { opacity: 0.15; }
+  95%   { opacity: 0.82; }
+}
+.animate-lightning-bolt {
+  animation: lightningBolt 11s ease-out infinite;
+  will-change: opacity;
+}
+
+/* --- Valley Mist & Cloud Drift --- */
+@keyframes mistFloat {
+  0%   { transform: translate3d(-3.5%, 0, 0); opacity: 0.45; }
+  50%  { opacity: 0.75; }
+  100% { transform: translate3d(3.5%, 0, 0); opacity: 0.45; }
+}
+.animate-mist-float {
+  animation: mistFloat var(--mist-dur, 26s) ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+/* --- Cumulus Cloud Drift --- */
+@keyframes cloudDriftSlow {
+  0%   { transform: translate3d(-2.5%, 0, 0); }
+  100% { transform: translate3d(2.5%, 0, 0); }
+}
+.animate-cloud-drift {
+  animation: cloudDriftSlow var(--drift-dur, 36s) ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* --- Lake Water Specular Shimmer --- */
+@keyframes lakeShimmer {
+  0%, 100% { opacity: 0.22; transform: scaleX(0.92); }
+  50%      { opacity: 0.55; transform: scaleX(1.08); }
+}
+.animate-shimmer {
+  animation: lakeShimmer var(--shim-dur, 5s) ease-in-out infinite var(--shim-del, 0s);
+  will-change: transform, opacity;
+}
+
+/* --- Foreground Botanical Leaf Sway --- */
+@keyframes leafSway {
+  0%   { transform: rotate(-2.5deg); }
+  100% { transform: rotate(2.5deg); }
+}
+.animate-leaf-sway {
+  transform-origin: 0% 100%;
+  animation: leafSway 7s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* --- Floating Windblown Leaves (Meadow & Nature breeze) --- */
+@keyframes floatLeaf {
+  0% {
+    transform: translate3d(-8vw, -6vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate3d(112vw, 68vh, 0) rotate(520deg);
+    opacity: 0;
+  }
+}
+.animate-float-leaf {
+  animation: floatLeaf var(--leaf-dur, 16s) cubic-bezier(0.38, 0, 0.22, 1) infinite var(--leaf-del, 0s);
+  will-change: transform, opacity;
+}
+
+/* --- Glass Orb Floating Accent (Abstract Silk) --- */
+@keyframes glassOrbFloat {
+  0%   { transform: translate3d(0, 0, 0); }
+  50%  { transform: translate3d(0, -10px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.animate-glass-orb {
+  animation: glassOrbFloat var(--orb-dur, 9s) ease-in-out infinite alternate;
+  will-change: transform;
+}

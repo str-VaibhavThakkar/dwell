@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "profiles": {
+    "onclite": {
+      "model": "Redmi Y3",
+      "manufacturer": "Xiaomi",
+      "batteryPath": "/sys/class/power_supply/battery",
+      "chargeControlNode": "/sys/class/power_supply/battery/input_suspend",
+      "chargeDisableVal": "1",
+      "chargeEnableVal": "0",
+      "displayType": "lcd",
+      "hasProximity": true,
+      "isBinaryProximity": true,
+      "notes": "Qualcomm Snapdragon 632, IPS LCD. Uses input_suspend for charging cutoff."
+    },
+    "onc": {
+      "model": "Redmi 7",
+      "manufacturer": "Xiaomi",
+      "batteryPath": "/sys/class/power_supply/battery",
+      "chargeControlNode": "/sys/class/power_supply/battery/input_suspend",
+      "chargeDisableVal": "1",
+      "chargeEnableVal": "0",
+      "displayType": "lcd",
+      "hasProximity": true,
+      "isBinaryProximity": true,
+      "notes": "Qualcomm Snapdragon 632, IPS LCD."
+    },
+    "cheetah": {
+      "model": "Pixel 7 Pro",
+      "manufacturer": "Google",
+      "batteryPath": "/sys/class/power_supply/battery",
+      "chargeControlNode": "/sys/class/power_supply/battery/charge_control_limit_max",
+      "chargeDisableVal": "0",
+      "chargeEnableVal": "100",
+      "displayType": "oled",
+      "hasProximity": true,
+      "isBinaryProximity": true,
+      "notes": "Google Tensor G2, LTPO AMOLED."
+    },
+    "generic": {
+      "model": "Universal Android Device",
+      "manufacturer": "Universal",
+      "batteryPath": "/sys/class/power_supply/battery",
+      "chargeControlNode": "/sys/class/power_supply/battery/charging_enabled",
+      "chargeDisableVal": "0",
+      "chargeEnableVal": "1",
+      "displayType": "auto",
+      "hasProximity": true,
+      "isBinaryProximity": false,
+      "notes": "Fallback generic profile with standard Linux power_supply nodes."
+    }
+  }
+}

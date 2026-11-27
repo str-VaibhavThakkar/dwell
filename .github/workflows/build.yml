@@ -1,0 +1,89 @@
+name: Build Dwell APK
+
+on:
+  push:
+    branches: [ "master", "oss/**", "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Drift Guard (Config & Security Integrity Check)
+        if: github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "=== Running Dwell Drift Guard ==="
+          git fetch origin master:refs/remotes/origin/master --depth=1
+          
+          # Files that MUST stay 100% synchronized across all branches
+          GUARDED_FILES=".gitignore LICENSE SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md .github/workflows/build.yml"
+          
+          DRIFT_DETECTED=0
+          for file in $GUARDED_FILES; do
+            if ! git diff --quiet origin/master -- "$file"; then
+              echo "::error file=$file::Drift detected! '$file' is out of sync with master."
+              git diff origin/master -- "$file"
+              DRIFT_DETECTED=1
+            fi
+          done
+          
+          if [ $DRIFT_DETECTED -ne 0 ]; then
+            echo ""
+            echo "❌ CRITICAL: Configuration files on this branch have drifted from master!"
+            echo "To fix, run locally:"
+            echo "  git checkout master -- .gitignore LICENSE SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md .github/workflows/build.yml"
+            echo "  git commit -m 'chore: sync config from master'"
+            echo "  git push"
+            exit 1
+          fi
+          echo "✅ All critical configuration files match master."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwell-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Prepare Named Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG_NAME" == *"universal"* ]]; then
+            cp android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/dwell-universal-${TAG_NAME}.apk"
+          else
+            cp android/app/build/outputs/apk/debug/app-debug.apk "android/app/build/outputs/apk/debug/dwell-master-${TAG_NAME}.apk"
+          fi
+
+      - name: Publish GitHub Release Asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/dwell-*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

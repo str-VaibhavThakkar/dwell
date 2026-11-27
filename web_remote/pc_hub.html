@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Desk Dock — PC Control Hub & Live Mirror</title>
+  <style>
+    :root {
+      --bg: #090B0E;
+      --card: #13171F;
+      --card-border: rgba(230, 226, 221, 0.08);
+      --card-hover: rgba(230, 226, 221, 0.12);
+      --fg: #E6E2DD;
+      --muted: #8E98A5;
+      --accent: #C9A679;
+      --accent-glow: rgba(201, 166, 121, 0.25);
+      --sage: #8FA895;
+      --rose: #C48B8B;
+      --cyan: #56B6C2;
+      --btn-bg: #1B212C;
+      --btn-border: #283141;
+      --btn-active: #252D3C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(19, 23, 31, 0.6);
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(143, 168, 149, 0.15);
+      border: 1px solid rgba(143, 168, 149, 0.3);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: var(--sage);
+      font-weight: 500;
+    }
+    .status-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sage);
+      box-shadow: 0 0 8px var(--sage);
+    }
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 440px 1fr;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    @media (max-width: 1024px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .panel-head h2 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    /* Tactile Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--fg);
+      transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+      user-select: none;
+    }
+    .btn:hover {
+      background: #232B38;
+      border-color: rgba(230, 226, 221, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .btn:active {
+      transform: translateY(1px);
+      background: var(--btn-active);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .btn.primary {
+      background: linear-gradient(180deg, #D4B285 0%, #BA9564 100%);
+      color: #12100C;
+      border-color: #E2C39B;
+      box-shadow: 0 2px 8px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .btn.primary:hover {
+      background: linear-gradient(180deg, #DFBD8F 0%, #C49F6D 100%);
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .btn.primary:active {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .telemetry-cell {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .telemetry-cell .k {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .telemetry-cell .v {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-top: 2px;
+    }
+    input, select {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--btn-border);
+      border-radius: 8px;
+      color: var(--fg);
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      width: 100%;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .task-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .task-item.done span {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    /* Live Phone Screen Frame */
+    .preview-container {
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .preview-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .phone-bezel {
+      flex: 1;
+      background: #020202;
+      border: 3px solid #232832;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      min-height: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .phone-bezel iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div style="font-size: 1.4rem;">📱</div>
+      <div>
+        <h1>Redmi Y3 Desk Dock</h1>
+        <div style="font-size: 0.75rem; color: var(--muted); font-family: monospace;">192.168.29.25:8000</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap: 12px;">
+      <div class="status-pill" id="connPill">
+        <span class="dot"></span>
+        <span id="connText">Connected · Kolkata, WB</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls">
+      <!-- Screen & Hardware Power -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Screen & Power</h2>
+          <span style="font-size:0.75rem; color:var(--sage)" id="scrStatus">Awake</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="callPhone('/api/screen/wake')">☀️ Wake Screen</button>
+          <button class="btn" onclick="callPhone('/api/screen/sleep')">🌙 Sleep</button>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telemetry-cell">
+            <div class="k">Battery</div>
+            <div class="v" id="tBat">--%</div>
+          </div>
+          <div class="telemetry-cell">
+            <div class="k">Temp</div>
+            <div class="v" id="tTemp">-- °C</div>
+          </div>
+          <div class="telemetry-cell">
+            <div class="k">Guard</div>
+            <div class="v" id="tGuard" style="color:var(--sage)">Active</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Focus & Pomodoro -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Study & Focus Timer</h2>
+          <span style="font-size:0.75rem; color:var(--accent)" id="tmStatus">Ready</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="setTimer(25, 'Focus')">⏱️ Focus 25m</button>
+          <button class="btn" onclick="setTimer(50, 'Deep Work')">📖 Deep 50m</button>
+          <button class="btn" onclick="setTimer(5, 'Break')">☕ Break 5m</button>
+          <button class="btn" style="color:var(--rose)" onclick="stopTimer()">⏹️ Stop</button>
+        </div>
+      </section>
+
+      <!-- Scene Switcher -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Scene Selection</h2>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="setScene('desk')">🪟 Desk Window</button>
+          <button class="btn" onclick="setScene('mountains')">⛰️ Mountains</button>
+          <button class="btn" onclick="setScene('sakura')">🌸 Sakura</button>
+          <button class="btn" onclick="setScene('sky')">🌌 Sky Only</button>
+        </div>
+      </section>
+
+      <!-- Tasks Checklist -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Study Tasks</h2>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+        <div style="display:flex; gap:8px;">
+          <input id="newTaskInput" placeholder="Add study task (press Enter)..." onkeydown="if(event.key==='Enter')addTask()">
+          <button class="btn" onclick="addTask()">Add</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Live Mirrored Display -->
+    <div class="preview-container">
+      <div class="preview-header">
+        <div>
+          <h2>Live Dock Screen (Mirrored)</h2>
+          <span style="font-size:0.75rem; color:var(--muted)">Rendered live from phone server at 192.168.29.25</span>
+        </div>
+        <button class="btn" style="font-size:0.78rem; padding:6px 12px;" onclick="refreshIframe()">🔄 Refresh View</button>
+      </div>
+      <div class="phone-bezel">
+        <iframe id="dockFrame" src="http://192.168.29.25:8000/dock/"></iframe>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const PHONE_URL = "http://192.168.29.25:8000";
+    const TOKEN = "36769d33";
+
+    async function callPhone(path, payload) {
+      try {
+        const res = await fetch(PHONE_URL + path, {
+          method: payload !== undefined ? "POST" : "GET",
+          headers: { "X-Token": TOKEN, "Content-Type": "application/json" },
+          body: payload !== undefined ? JSON.stringify(payload) : undefined
+        });
+        const data = await res.json();
+        syncState();
+        return data;
+      } catch (err) {
+        console.error("Phone call error:", err);
+      }
+    }
+
+    function setTimer(minutes, label) {
+      callPhone('/api/timer', { action: 'start', minutes: minutes, label: label });
+    }
+    function stopTimer() {
+      callPhone('/api/timer', { action: 'stop' });
+    }
+    function setScene(name) {
+      callPhone('/api/settings', { scene: name });
+      refreshIframe();
+    }
+    function refreshIframe() {
+      const f = document.getElementById("dockFrame");
+      f.src = PHONE_URL + "/dock/?_t=" + Date.now();
+    }
+
+    async function syncState() {
+      try {
+        const st = await callPhone('/api/state');
+        if (!st) return;
+        document.getElementById("tBat").textContent = (st.battery?.capacity ?? "--") + "%";
+        document.getElementById("tTemp").textContent = (st.battery?.temp_c ?? "--") + " °C";
+        document.getElementById("tGuard").textContent = st.battery?.guard?.charging_allowed ? "Charging" : "Protected (50-60%)";
+
+        const tm = st.timer;
+        if (tm?.running && tm.endsAt > Date.now()) {
+          const s = Math.round((tm.endsAt - Date.now()) / 1000);
+          document.getElementById("tmStatus").textContent = Math.floor(s/60) + ":" + String(s%60).padStart(2, '0') + " left";
+        } else {
+          document.getElementById("tmStatus").textContent = "Ready";
+        }
+
+        const list = document.getElementById("taskList");
+        list.innerHTML = (st.tasks || []).map(t => `
+          <li class="task-item ${t.done ? 'done' : ''}">
+            <label>
+              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="callPhone('/api/tasks/${t.id}', {done: this.checked})">
+              <span>${t.text}</span>
+            </label>
+            <button class="btn" style="padding:2px 8px; font-size:0.75rem;" onclick="callPhone('/api/tasks/${t.id}', {delete: true})">✕</button>
+          </li>
+        `).join("");
+      } catch (e) {}
+    }
+
+    function addTask() {
+      const inp = document.getElementById("newTaskInput");
+      const txt = inp.value.trim();
+      if (!txt) return;
+      callPhone('/api/tasks', { text: txt });
+      inp.value = "";
+    }
+
+    setInterval(syncState, 4000);
+    syncState();
+  </script>
+</body>
+</html>
