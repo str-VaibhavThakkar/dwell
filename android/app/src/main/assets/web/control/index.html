@@ -640,29 +640,7 @@
       </div>
 
       <div class="modal-section">
-        <h3>Display & Operation</h3>
-        <div class="row">
-          <div>
-            <div class="title">Operation mode</div>
-            <div class="sub">Choose between dedicated dock kiosk or phone coexistence</div>
-          </div>
-          <select id="opModeSel" style="width:auto; margin:0;">
-            <option value="dock">Dedicated Dock (Fullscreen Kiosk)</option>
-            <option value="daily">Daily Driver (Multitasking Coexistence)</option>
-          </select>
-        </div>
-        <div class="row">
-          <div>
-            <div class="title">Navigation mode</div>
-            <div class="sub">How to interact with pages on the phone screen</div>
-          </div>
-          <select id="navModeSel" style="width:auto; margin:0;">
-            <option value="both">Both (Touch Gestures + Hardware Buttons)</option>
-            <option value="touch">Touchscreen Gestures Only</option>
-            <option value="buttons">Hardware Volume Buttons Only</option>
-            <option value="remote">Remote Only (PC Control Hub)</option>
-          </select>
-        </div>
+        <h3>Display</h3>
         <div class="row">
           <div>
             <div class="title">Clock format</div>
@@ -694,28 +672,8 @@
         </div>
         <div class="row">
           <div>
-            <div class="title">Proximity gestures</div>
-            <div class="sub">Wave to wake, sleep or stop an alarm</div>
-          </div>
-          <label class="toggle-switch" title="Toggle proximity gestures">
-            <input type="checkbox" id="proxGesturesToggle" onchange="toggleProximityGestures(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="row">
-          <div>
-            <div class="title">Safe Mode (Testing & Daily Driver)</div>
-            <div class="sub">Disables screen wake pulses, touch blocking, and aggressive dock watchdog. Auto-enabled on non-root devices.</div>
-          </div>
-          <label class="toggle-switch" title="Toggle Safe Mode">
-            <input type="checkbox" id="safeModeToggle" onchange="toggleSafeMode(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="row">
-          <div>
-            <div class="title">Lock to Dock (Kiosk Mode)</div>
-            <div class="sub">Suppresses 100% of digitizer touches. Turn OFF to navigate Android via scrcpy.</div>
+            <div class="title">Kiosk Lock (Touch Suppression)</div>
+            <div class="sub">Consumes 100% of digitizer touches to prevent phantom clicks. Turn off if your touchscreen is working normally.</div>
           </div>
           <label class="toggle-switch" title="Toggle Kiosk Lock">
             <input type="checkbox" id="kioskLockToggle" onchange="toggleKioskLock(this.checked)">
@@ -724,8 +682,28 @@
         </div>
         <div class="row">
           <div>
+            <div class="title">Hardware Volume Key Remapping</div>
+            <div class="sub">Intercepts volume buttons for dock page navigation. Turn off to keep volume buttons controlling normal phone audio.</div>
+          </div>
+          <label class="toggle-switch" title="Toggle Hardware Key Remapping">
+            <input type="checkbox" id="hwKeysToggle" onchange="toggleHardwareKeys(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Proximity gestures</div>
+            <div class="sub">Wave to sleep or stop an alarm</div>
+          </div>
+          <label class="toggle-switch" title="Toggle proximity gestures">
+            <input type="checkbox" id="proxGesturesToggle" onchange="toggleProximityGestures(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div>
             <div class="title">Night Mode</div>
-            <div class="sub">Silences hourly & wave wakes, sets brightness to min, applies dark theme</div>
+            <div class="sub">Silences hourly wakes, sets brightness to 1, applies minimal dark theme</div>
           </div>
           <label class="toggle-switch" title="Toggle Night Mode">
             <input type="checkbox" id="nightModeToggle" onchange="toggleNightMode(this.checked)">
@@ -739,11 +717,13 @@
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
             <select id="nightStartSel" style="width:auto; margin:0;" onchange="updateNightSchedule()">
+              <option value="20">8:00 PM (20:00)</option>
               <option value="21">9:00 PM (21:00)</option>
               <option value="22">10:00 PM (22:00)</option>
               <option value="23" selected>11:00 PM (23:00)</option>
               <option value="0">12:00 AM (00:00)</option>
               <option value="1">1:00 AM (01:00)</option>
+              <option value="2">2:00 AM (02:00)</option>
             </select>
             <span style="color:var(--muted); font-size:12px;">to</span>
             <select id="nightEndSel" style="width:auto; margin:0;" onchange="updateNightSchedule()">
@@ -751,6 +731,8 @@
               <option value="6" selected>6:00 AM (06:00)</option>
               <option value="7">7:00 AM (07:00)</option>
               <option value="8">8:00 AM (08:00)</option>
+              <option value="9">9:00 AM (09:00)</option>
+              <option value="10">10:00 AM (10:00)</option>
             </select>
           </div>
         </div>
@@ -855,14 +837,6 @@ Loading logs...
     const q = new URLSearchParams(location.search);
     if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
     const TOKEN = localStorage.getItem("dockToken") || "";
-    if (!TOKEN) {
-      fetch("/discover").then(r => r.json()).then(d => {
-        if (d && d.token) {
-          localStorage.setItem("dockToken", d.token);
-          location.search = "?token=" + encodeURIComponent(d.token);
-        }
-      }).catch(() => {});
-    }
     const authQuery = () => TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "";
 
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -1188,12 +1162,25 @@ Loading logs...
       }
     }
 
-    async function toggleSafeMode(checked) {
-      await post('/api/settings', { safeMode: checked });
+    async function syncDeviceTime() {
+      const btn = document.getElementById("btnSyncTime");
+      if (btn) btn.textContent = "Syncing...";
+      try {
+        await post("/api/system/time-sync", { timestamp: Date.now() });
+        refreshMirror();
+      } catch (e) {
+        console.error("Failed to sync clock:", e);
+      } finally {
+        if (btn) btn.textContent = "Sync Clock";
+      }
     }
 
     async function toggleKioskLock(checked) {
       await post('/api/settings', { kioskLock: checked });
+    }
+
+    async function toggleHardwareKeys(checked) {
+      await post('/api/settings', { hardwareKeysEnabled: checked });
     }
 
     async function toggleNightMode(checked) {
@@ -1206,19 +1193,6 @@ Loading logs...
       const ns = +document.getElementById("nightStartSel").value;
       const ne = +document.getElementById("nightEndSel").value;
       await post('/api/settings', { nightStart: ns, nightEnd: ne });
-    }
-
-    async function syncDeviceTime() {
-      const btn = document.getElementById("btnSyncTime");
-      if (btn) btn.textContent = "Syncing...";
-      try {
-        await post("/api/system/time-sync", { timestamp: Date.now() });
-        refreshMirror();
-      } catch (e) {
-        console.error("Failed to sync clock:", e);
-      } finally {
-        if (btn) btn.textContent = "Sync Clock";
-      }
     }
 
     /* Diagnostic Logs */
@@ -1326,6 +1300,7 @@ Loading logs...
     async function openSystemHomeSettings() {
       await post('/api/system/launchers/settings', {});
     }
+
     let lastMirrorActive = false;
     /* Live Mirror Refresh (Genuine Hardware Screen Snapshot) */
     function refreshMirror() {
@@ -1379,31 +1354,6 @@ Loading logs...
         const proxActive = scr?.proximity_gestures !== undefined ? scr.proximity_gestures : (st.settings?.proximityGestures ?? true);
         updateProximityGesturesUI(proxActive);
 
-        if (st.settings?.safeMode !== undefined) {
-          const sMode = document.getElementById("safeModeToggle");
-          if (sMode && document.activeElement !== sMode) sMode.checked = !!st.settings.safeMode;
-        }
-        if (st.settings?.kioskLock !== undefined) {
-          const kLock = document.getElementById("kioskLockToggle");
-          if (kLock && document.activeElement !== kLock) kLock.checked = !!st.settings.kioskLock;
-        }
-        if (st.settings?.nightMode !== undefined) {
-          const nMode = document.getElementById("nightModeToggle");
-          if (nMode && document.activeElement !== nMode) {
-            nMode.checked = !!st.settings.nightMode;
-            const row = document.getElementById("nightScheduleRow");
-            if (row) row.style.opacity = nMode.checked ? "1" : "0.5";
-          }
-        }
-        if (st.settings?.nightStart !== undefined) {
-          const nsSel = document.getElementById("nightStartSel");
-          if (nsSel && document.activeElement !== nsSel) nsSel.value = st.settings.nightStart;
-        }
-        if (st.settings?.nightEnd !== undefined) {
-          const neSel = document.getElementById("nightEndSel");
-          if (neSel && document.activeElement !== neSel) neSel.value = st.settings.nightEnd;
-        }
-
         document.getElementById("mBat").textContent = (st.battery?.capacity ?? "--") + "%";
         document.getElementById("mTemp").textContent = (st.battery?.temp_c ?? "--") + " °C";
         document.getElementById("mGuard").textContent = st.battery?.guard?.charging_allowed ? "Charging" : "50-60% Limit";
@@ -1436,16 +1386,41 @@ Loading logs...
           updateTimeFormatUI(st.settings.timeFormat);
         }
 
+        if (st.settings?.kioskLock !== undefined) {
+          const kToggle = document.getElementById("kioskLockToggle");
+          if (kToggle) kToggle.checked = !!st.settings.kioskLock;
+        }
+        if (st.settings?.hardwareKeysEnabled !== undefined) {
+          const hkToggle = document.getElementById("hwKeysToggle");
+          if (hkToggle) hkToggle.checked = !!st.settings.hardwareKeysEnabled;
+        }
+        if (st.settings?.nightMode !== undefined) {
+          const nMode = document.getElementById("nightModeToggle");
+          if (nMode) {
+            nMode.checked = !!st.settings.nightMode;
+            const row = document.getElementById("nightScheduleRow");
+            if (row) row.style.opacity = nMode.checked ? "1" : "0.5";
+          }
+        }
+        if (st.settings?.nightStart !== undefined) {
+          const nsSel = document.getElementById("nightStartSel");
+          if (nsSel && document.activeElement !== nsSel) nsSel.value = st.settings.nightStart;
+        }
+        if (st.settings?.nightEnd !== undefined) {
+          const neSel = document.getElementById("nightEndSel");
+          if (neSel && document.activeElement !== neSel) neSel.value = st.settings.nightEnd;
+        }
+
         if (!loadedSettings && st.settings) {
           loadedSettings = true;
           const s = st.settings;
-          document.getElementById("opModeSel").value = s.operationMode || "dock";
-          document.getElementById("navModeSel").value = s.navMode || "both";
           document.getElementById("placeInp").value = s.place || "Kolkata, WB";
           document.getElementById("latInp").value = s.lat ?? 22.5643;
           document.getElementById("lonInp").value = s.lon ?? 88.3693;
           document.getElementById("pauseCapInp").value = s.pauseCap ?? 60;
           document.getElementById("resumeCapInp").value = s.resumeCap ?? 50;
+          document.getElementById("nightStartSel").value = s.nightStart ?? 23;
+          document.getElementById("nightEndSel").value = s.nightEnd ?? 6;
           document.getElementById("autoLocCheck").checked = s.autoLocation !== false;
           document.getElementById("cdsInp").value = (s.countdowns || []).map(c => `${c.date} ${c.label}`).join("\n");
           if (s.scene) {
@@ -1722,8 +1697,6 @@ Loading logs...
 
     function saveSettings(silent = false) {
       const p = {
-        operationMode: document.getElementById("opModeSel").value,
-        navMode: document.getElementById("navModeSel").value,
         place: document.getElementById("placeInp").value,
         lat: +document.getElementById("latInp").value,
         lon: +document.getElementById("lonInp").value,
