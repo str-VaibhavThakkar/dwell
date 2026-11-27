@@ -836,8 +836,23 @@ Loading logs...
   <script>
     const q = new URLSearchParams(location.search);
     if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
-    const TOKEN = localStorage.getItem("dockToken") || "";
+    let TOKEN = localStorage.getItem("dockToken") || "";
     const authQuery = () => TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "";
+
+    async function resolveToken() {
+      try {
+        const res = await fetch("/api/discover");
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.token) {
+            TOKEN = d.token;
+            localStorage.setItem("dockToken", d.token);
+            return d.token;
+          }
+        }
+      } catch (e) {}
+      return TOKEN;
+    }
 
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const escapeHtml = esc;
@@ -1012,7 +1027,7 @@ Loading logs...
       }
     });
 
-    async function api(path, body) {
+    async function api(path, body, retryOnAuth = true) {
       try {
         const url = path.includes("?") 
           ? (TOKEN && !path.includes("token=") ? `${path}&token=${encodeURIComponent(TOKEN)}` : path) 
@@ -1023,11 +1038,17 @@ Loading logs...
           body: body === undefined ? undefined : JSON.stringify(body)
         });
         if (!res.ok) {
-          if (res.status === 401 && !TOKEN) {
-            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", "36769d33");
+          if (res.status === 401 && retryOnAuth) {
+            const oldToken = TOKEN;
+            const discovered = await resolveToken();
+            if (discovered && discovered !== oldToken) {
+              return await api(path, body, false);
+            }
+            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", TOKEN || "");
             if (entered) {
-              localStorage.setItem("dockToken", entered);
-              location.reload();
+              TOKEN = entered.trim();
+              localStorage.setItem("dockToken", TOKEN);
+              return await api(path, body, false);
             }
           }
           return null;
@@ -1306,7 +1327,7 @@ Loading logs...
     function refreshMirror() {
       if (lastMirrorActive) return; // Don't request camera snapshot when mirror is active
       const snapImg = document.getElementById("dockSnapshot");
-      const token = new URLSearchParams(location.search).get("token") || "";
+      const token = TOKEN || new URLSearchParams(location.search).get("token") || "";
       if (snapImg) {
         snapImg.src = "/api/screen/snapshot?token=" + encodeURIComponent(token) + "&_t=" + Date.now();
       }
@@ -1785,11 +1806,15 @@ Loading logs...
     setInterval(updateClock, 1000);
     updateClock();
 
-    setInterval(sync, 4000);
-    sync();
-    loadAvailableSounds();
-
-    setTimeout(refreshMirror, 300);
+    (async function init() {
+      if (!TOKEN) {
+        await resolveToken();
+      }
+      sync();
+      loadAvailableSounds();
+      setTimeout(refreshMirror, 300);
+      setInterval(sync, 4000);
+    })();
 
     /* ---- popups ---- */
     function openModal(id) {

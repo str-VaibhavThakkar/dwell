@@ -11,9 +11,22 @@ object Root {
 
     fun sh(cmd: String, timeoutSec: Long = 10): Result = try {
         val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
-        val out = p.inputStream.bufferedReader().readText()
-        if (!p.waitFor(timeoutSec, TimeUnit.SECONDS)) { p.destroy(); Result(-1, "timeout") }
-        else Result(p.exitValue(), out.trim())
+        var out = ""
+        val reader = Thread {
+            try {
+                out = p.inputStream.bufferedReader().use { it.readText() }
+            } catch (_: Exception) {}
+        }
+        reader.start()
+        val finished = p.waitFor(timeoutSec, TimeUnit.SECONDS)
+        if (!finished) {
+            p.destroyForcibly()
+            reader.interrupt()
+            Result(-1, "timeout")
+        } else {
+            reader.join(1000)
+            Result(p.exitValue(), out.trim())
+        }
     } catch (e: Exception) {
         Log.w(TAG, "su failed: $cmd", e); Result(-1, e.message ?: "error")
     }

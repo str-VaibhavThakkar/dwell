@@ -108,7 +108,13 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
             }
 
             uri == "/api/timer" && post -> {
-                val b = body(s); store.setTimer(b); json(b)
+                val b = body(s); val now = System.currentTimeMillis()
+                val t = when (b.optString("action")) {
+                    "start" -> JSONObject().put("running", true).put("label", b.optString("label", "Focus"))
+                        .put("endsAt", now + b.optInt("minutes", 25) * 60_000L)
+                    else -> JSONObject().put("running", false)
+                }
+                store.setTimer(t); json(t)
             }
 
             uri == "/api/alarms" && post -> {
@@ -116,6 +122,21 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                 MainActivity.instance?.reloadWebAlarms()
                 json(al)
             }
+
+            uri == "/api/alarms/test" && post -> {
+                val sound = body(s).optString("sound", "homecoming.mp3")
+                AlarmAudioPlayer.play(ctx, sound)
+                json(JSONObject().put("playing", true).put("sound", sound))
+            }
+
+            (uri == "/api/alarms/stop" || uri == "/api/alarms/dismiss") && post -> {
+                AlarmEngine.dismissAlarm(ctx)
+                MainActivity.instance?.reloadWebAlarms()
+                json(JSONObject().put("ok", true).put("playing", false).put("isRinging", false))
+            }
+
+            uri == "/api/alarms/sounds" -> json(JSONObject()
+                .put("sounds", JSONArray(AlarmAudioPlayer.getAvailableSounds(ctx))))
 
             uri.startsWith("/api/alarms/") && post -> {
                 val id = uri.removePrefix("/api/alarms/")
@@ -131,27 +152,18 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                 }
             }
 
-            uri == "/api/alarms/test" && post -> {
-                val sound = body(s).optString("sound", "homecoming.mp3")
-                AlarmAudioPlayer.play(ctx, sound)
-                json(JSONObject().put("playing", true).put("sound", sound))
-            }
-
-            uri == "/api/alarms/stop" && post -> {
-                AlarmEngine.dismissAlarm(ctx)
-                json(JSONObject().put("playing", false))
-            }
-
-            uri == "/api/alarms/sounds" -> json(JSONObject()
-                .put("sounds", JSONArray(AlarmAudioPlayer.getAvailableSounds(ctx))))
-
             uri == "/api/settings" && post -> {
                 val b = body(s)
                 store.updateSettings(b)
                 if (b.has("proximityGestures")) {
                     DockService.instance?.proximityEngine?.setEnabled(store.proximityGestures)
                 }
-                Screen.setTimeout(store.timeoutSec); HourlyWake.schedule(ctx)
+                try {
+                    Screen.setTimeout(store.timeoutSec)
+                    HourlyWake.schedule(ctx)
+                } catch (e: Exception) {
+                    AppLogger.w("DockServer", "Failed applying screen timeout/hourly wake: ${e.message}")
+                }
                 MainActivity.instance?.reloadWebSettings()
                 json(store.settings())
             }
@@ -160,12 +172,29 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
             uri == "/api/screen/wake" && post -> json(JSONObject().put("wakefulness", Screen.wake()))
             uri == "/api/screen/sleep" && post -> json(JSONObject().put("wakefulness", Screen.sleep()))
             uri == "/api/calibration/enter" && post -> {
-                MainActivity.instance?.onEnterCalibrationMode()
-                json(JSONObject().put("calibration", true))
+                MainActivity.instance?.runOnUiThread { MainActivity.instance?.onEnterCalibrationMode() }
+                json(JSONObject().put("ok", true).put("calibration", true))
+            }
+            uri == "/api/calibration/exit" && post -> {
+                MainActivity.instance?.runOnUiThread { MainActivity.instance?.calibrationController?.exitAndSave() }
+                json(JSONObject().put("ok", true))
+            }
+            uri == "/api/screen/proximity" && post -> {
+                val b = body(s)
+                val enabled = if (b.has("enabled")) b.getBoolean("enabled") else true
+                store.proximityGestures = enabled
+                DockService.instance?.proximityEngine?.setEnabled(enabled)
+                json(JSONObject().put("ok", true).put("proximity_gestures", enabled))
+            }
+            uri == "/api/screen/timeout" && post -> {
+                val sec = body(s).optInt("timeout_seconds", 60).coerceIn(15, 3600)
+                store.timeoutSec = sec
+                try { Screen.setTimeout(sec) } catch (_: Exception) {}
+                json(Screen.status(ctx))
             }
             uri == "/api/screen/rotate" && post -> {
                 val b = body(s)
-                if (b.optBoolean("auto", false)) {
+                if (b.optBoolean("auto", false) || b.optBoolean("auto_rotate", false)) {
                     Screen.setAutoRotate(true)
                 } else if (b.has("orientation")) {
                     Screen.setOrientation(b.getString("orientation"))
@@ -182,14 +211,18 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                     return res
                 }
                 val tmpFile = java.io.File(ctx.cacheDir, "screen_snap.png")
-                Root.sh("screencap -p ${tmpFile.absolutePath}")
+                Root.sh("screencap -p ${tmpFile.absolutePath}", 4)
                 if (tmpFile.exists() && tmpFile.length() > 0) {
-                    val fis = java.io.FileInputStream(tmpFile)
-                    val res = newFixedLengthResponse(Response.Status.OK, "image/png", fis, tmpFile.length())
-                    res.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-                    res.addHeader("Pragma", "no-cache")
-                    res.addHeader("Expires", "0")
-                    res
+                    try {
+                        val bytes = tmpFile.readBytes()
+                        val res = newFixedLengthResponse(Response.Status.OK, "image/png", java.io.ByteArrayInputStream(bytes), bytes.size.toLong())
+                        res.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                        res.addHeader("Pragma", "no-cache")
+                        res.addHeader("Expires", "0")
+                        res
+                    } catch (e: Exception) {
+                        err(Response.Status.INTERNAL_ERROR, "failed reading snapshot: ${e.message}")
+                    }
                 } else {
                     err(Response.Status.INTERNAL_ERROR, "failed to capture snapshot")
                 }
