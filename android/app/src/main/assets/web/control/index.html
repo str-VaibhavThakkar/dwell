@@ -1,0 +1,1865 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redmi Y3</title>
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --panel: #111113;
+      --panel-2: #17171a;
+      --field: #0d0d0f;
+      --line: #232327;
+      --line-soft: #1a1a1d;
+      --fg: #e9e7e2;
+      --muted: #8c8c93;
+      --dim: #5e5e65;
+
+      /* muted pastels: used sparingly, one job each */
+      --pastel-sage: #a9c0b0;   /* ok / live / on   */
+      --pastel-sand: #d2c0a8;   /* primary / active */
+      --pastel-slate: #a8b8c9;  /* idle / asleep    */
+      --pastel-rose: #d3a9a9;   /* stop / delete    */
+
+      /* aliases so old inline styles keep working */
+      --border: var(--line);
+      --border-subtle: var(--line-soft);
+      --card: var(--panel);
+
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- top bar ---------- */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .topbar-left { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+    .device-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .device-badge { font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .live { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pastel-sage); display: inline-block; }
+    .clock { font-family: var(--mono); font-size: 14px; color: var(--fg); }
+
+    /* ---------- layout: three full-height panels ---------- */
+    .shell {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 16px 24px 24px;
+      display: grid;
+      grid-template-columns: clamp(340px, 27vw, 460px) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .sect { padding: 18px 20px; border-top: 1px solid var(--line-soft); min-width: 0; }
+    .sect:first-child { border-top: 0; }
+    .sect.grow { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .panel.rail { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+    .panel.rail .sect { padding: 12px 18px; }
+    .panel.rail .card-head { margin-bottom: 8px; }
+    .panel.rail .kv { padding: 4px 0; }
+    .panel.rail .bottom-actions { margin-top: 10px; }
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; min-height: 28px; }
+    .card-head h2 { font-size: 13px; font-weight: 600; color: var(--fg); }
+    .meta { font-size: 12px; color: var(--muted); }
+    .meta.mono { font-family: var(--mono); }
+
+    @media (max-width: 1099px) {
+      html, body { height: auto; }
+      body { min-height: 100vh; }
+      .shell { grid-template-columns: 340px minmax(0, 1fr); }
+      .rail { grid-row: span 2; }
+      .panel { overflow: visible; }
+    }
+    @media (max-width: 719px) {
+      .shell { grid-template-columns: 1fr; padding: 12px; }
+      .rail { grid-row: auto; }
+      .topbar { padding: 12px; }
+    }
+
+    /* ---------- buttons: flat pills ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: background .12s ease, border-color .12s ease, color .12s ease, transform .08s ease;
+    }
+    .btn:hover { background: var(--panel-2); border-color: #34343a; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: default; transform: none; }
+
+    /* filled = active / primary (JS toggles accent-sand / accent-slate for active states) */
+    .btn.primary, .btn.accent-sand, .btn.accent-slate, .btn.on {
+      background: var(--pastel-sand);
+      border-color: var(--pastel-sand);
+      color: #141414;
+    }
+    .btn.primary:hover, .btn.accent-sand:hover, .btn.accent-slate:hover, .btn.on:hover {
+      background: #dccbb4; border-color: #dccbb4;
+    }
+    .btn.sm { padding: 5px 11px; font-size: 12px; }
+    .btn.ghost { border-color: transparent; color: var(--muted); }
+    .btn.ghost:hover { color: var(--fg); background: var(--panel-2); border-color: transparent; }
+    .btn.danger { color: var(--pastel-rose); }
+    .btn.danger:hover { border-color: #4a3434; background: #1a1313; }
+    .btn.danger-fill { background: var(--pastel-rose); border-color: var(--pastel-rose); color: #141414; font-weight: 600; }
+    .btn.danger-fill:hover { background: #dcb6b6; border-color: #dcb6b6; }
+    .btn.block { width: 100%; }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* segmented control */
+    .seg {
+      display: inline-flex;
+      gap: 2px;
+      padding: 3px;
+      background: var(--field);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+    .seg .btn { border-color: transparent; padding: 6px 14px; font-size: 12px; }
+    .seg .btn:hover { background: var(--panel-2); border-color: transparent; }
+    .seg .btn.accent-sand, .seg .btn.accent-slate { background: var(--pastel-sand); color: #141414; }
+
+    /* ---------- status badge ---------- */
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .status-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status-badge.awake { color: var(--pastel-sage); }
+    .status-badge.asleep { color: var(--pastel-slate); }
+    .status-badge.waking { color: var(--pastel-sand); }
+
+    /* ---------- stats ---------- */
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; margin-bottom: 12px; }
+    .stat { background: var(--field); border-radius: 12px; padding: 9px 11px; min-width: 0; }
+    .stat .label { font-size: 11px; color: var(--muted); }
+    .stat .val { font-family: var(--mono); font-size: 14px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ---------- inputs ---------- */
+    input, select, textarea {
+      background: var(--field);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 9px 12px;
+      width: 100%;
+      outline: none;
+      margin: 4px 0 0;
+      transition: border-color .12s ease;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--pastel-sand); }
+    textarea { resize: vertical; }
+    select { appearance: none; -webkit-appearance: none; padding-right: 28px;
+      background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
+      background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+    input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--pastel-sand); }
+    label { display: block; font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-row { display: flex; gap: 6px; align-items: center; }
+    .field-row input { margin: 4px 0 0; }
+
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+    .row:first-child { border-top: 0; padding-top: 0; }
+    .row .title { font-size: 13px; font-weight: 500; }
+    .row .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ---------- toggle ---------- */
+    .toggle-switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; cursor: pointer; margin: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; transition: background .15s, border-color .15s; }
+    .toggle-slider:before { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+    .toggle-switch input:checked + .toggle-slider { background: #1a241d; border-color: #35493b; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); background: var(--pastel-sage); }
+
+    /* ---------- live display ---------- */
+    .preview-canvas-container { display: flex; justify-content: center; align-items: center; margin-bottom: 12px; }
+    .phone-bezel {
+      background: #000;
+      border: 2px solid #26262a;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: width .25s ease, height .25s ease;
+    }
+    .phone-bezel.landscape { width: 100%; aspect-ratio: 19 / 9; }
+    .phone-bezel.portrait { height: min(44vh, 440px); aspect-ratio: 9 / 19; width: auto; }
+    .phone-screen-frame { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+    .rail-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .inline-check { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: var(--muted); cursor: pointer; }
+
+    /* ---------- focus timer ---------- */
+    .timer-readout { font-family: var(--mono); font-size: 38px; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--fg); }
+
+    /* ---------- tasks ---------- */
+    .task-list { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; flex: 1; min-height: 0; overflow-y: auto; align-content: start; }
+    
+    .task-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 4px 7px 2px; font-size: 13px; border-radius: 8px; }
+    .task-item label { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13px; color: var(--fg); cursor: pointer; min-width: 0; }
+    .task-item.done span { text-decoration: line-through; color: var(--dim); }
+
+    /* ---------- alarms ---------- */
+    .solar { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .solar b { color: var(--pastel-sand); font-family: var(--mono); font-weight: 500; }
+    .alarms-list { list-style: none; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; overflow-y: auto; align-content: start; }
+    .alarm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: var(--field); border: 1px solid var(--line-soft); border-radius: 12px; transition: opacity .2s; }
+    .alarm-row.disabled { opacity: .5; }
+    .alarm-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .alarm-main-line { display: flex; align-items: baseline; gap: 10px; }
+    .alarm-time-badge { font-family: var(--mono); font-size: 16px; color: var(--pastel-sand); }
+    .alarm-tag-text { font-size: 13px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .alarm-meta-line { display: flex; gap: 6px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+    .alarm-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .empty { padding: 16px; text-align: center; font-size: 12px; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; }
+
+    .ringing {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border: 1px solid #4a3434;
+      background: #151010;
+      border-radius: 12px;
+    }
+    .ringing .kicker { font-size: 11px; color: var(--pastel-rose); }
+    .ringing .name { font-size: 16px; font-weight: 600; margin-top: 2px; }
+    .ringing .sub { font-size: 12px; color: var(--muted); }
+
+    /* day chips */
+    .day-selector-wrap { margin-top: 12px; }
+    .day-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .day-top label { margin: 0; }
+    .day-presets { display: flex; gap: 4px; flex-wrap: wrap; }
+    .preset-chip { background: transparent; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-family: inherit; font-size: 11px; padding: 4px 10px; cursor: pointer; transition: all .12s ease; }
+    .preset-chip:hover { color: var(--fg); border-color: #34343a; }
+    .preset-chip.active { background: var(--pastel-sand); border-color: var(--pastel-sand); color: #141414; font-weight: 600; }
+    .day-chips-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day-chip { background: var(--field); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-family: inherit; font-size: 12px; padding: 8px 0; text-align: center; cursor: pointer; transition: all .12s ease; }
+    .day-chip:hover { color: var(--fg); border-color: #34343a; }
+    .day-chip.active { background: var(--pastel-sand); border-color: var(--pastel-sand); color: #141414; font-weight: 600; }
+    .day-summary-text { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    /* ---------- popups ---------- */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(3px);
+    }
+    .modal-card {
+      width: 100%; max-width: 480px; max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px 20px 20px;
+    }
+    .modal-card.wide { max-width: 620px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-head .title { font-size: 15px; font-weight: 600; }
+    .modal-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+    .modal-section:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+    .modal-section > h3 { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ---------- device + scene ---------- */
+    .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 13px 0; border-top: 1px solid var(--line-soft); }
+    .kv:first-of-type { border-top: 0; padding-top: 2px; }
+    .kv .k { font-size: 13px; color: var(--muted); }
+    .kv .v { font-family: var(--mono); font-size: 16px; }
+    .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pill-grid .btn { padding: 11px 16px; }
+    .bottom-actions { margin-top: auto; padding-top: 16px; }
+
+    /* ---------- alarm form ---------- */
+    .modal-card.wide .alarm-form { display: grid; grid-template-columns: 250px 1fr; gap: 22px; align-items: start; }
+    .alarm-form .af-right > div + div { margin-top: 2px; }
+    @media (max-width: 600px) { .modal-card.wide .alarm-form { grid-template-columns: 1fr; } }
+
+    /* ---------- analog clock picker ---------- */
+    .clockpicker { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 6px; }
+    .cp-display { display: flex; align-items: center; gap: 6px; }
+    .cp-seg { font-family: var(--mono); font-size: 32px; line-height: 1; padding: 8px 10px; border-radius: 12px; background: var(--field); color: var(--muted); border: 1px solid var(--line); cursor: pointer; user-select: none; }
+    .cp-seg.on { background: var(--pastel-sand); border-color: var(--pastel-sand); color: #141414; }
+    .cp-colon { font-family: var(--mono); font-size: 28px; color: var(--muted); }
+    .cp-ampm { display: flex; flex-direction: column; gap: 4px; margin-left: 6px; }
+    .cp-ampm button { font-family: inherit; font-size: 11px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+    .cp-ampm button.on { background: var(--pastel-sand); border-color: var(--pastel-sand); color: #141414; font-weight: 600; }
+    .cp-dial { width: 230px; height: 230px; display: block; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .cp-face { fill: var(--field); stroke: var(--line); stroke-width: 1; }
+    .cp-num { fill: var(--fg); font-family: var(--mono); font-size: 13px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+    .cp-num.sel { fill: #141414; font-weight: 600; }
+    .cp-hand { stroke: var(--pastel-sand); stroke-width: 2; stroke-linecap: round; }
+    .cp-knob { fill: var(--pastel-sand); }
+    .cp-pin { fill: var(--pastel-sand); }
+    .cp-dot { fill: #141414; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="device-title">Redmi Y3</div>
+      <div class="device-badge" id="hostBadge">onc · 192.168.29.25:8000</div>
+    </div>
+    <div class="topbar-right">
+      <span class="live"><i class="dot"></i><span id="gpuStatus">Streaming</span></span>
+      <span class="clock" id="clockTime">--:--</span>
+      <button class="btn sm" onclick="openLogsModal()">Logs</button>
+      <button class="btn sm" onclick="openModal('settingsModal')">Settings</button>
+    </div>
+  </header>
+
+  <main class="shell">
+
+    <!-- Panel 1: what the phone is doing -->
+    <aside class="panel rail">
+      <section class="sect">
+        <div class="card-head">
+          <h2>Live display</h2>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="meta mono" id="snapTime">Connected</span>
+            <button class="btn sm ghost" id="btnRefreshMirror" onclick="refreshMirror()">Refresh</button>
+          </div>
+        </div>
+        <div class="preview-canvas-container">
+          <div class="phone-bezel landscape" id="phoneBezel">
+            <img id="dockSnapshot" class="phone-screen-frame" alt="Phone Live Screen" style="object-fit: contain; width: 100%; height: 100%; display: block;" src="" />
+            <div id="dockCameraOverlay" class="screen-sleep-overlay" style="display:none; position:absolute; inset:0; background:#000000; flex-direction:column; align-items:center; justify-content:center; gap:8px; z-index:5;">
+              <span style="font-size:24px;">📷</span>
+              <span class="badge" style="color:var(--pastel-sand); border-color:var(--pastel-sand); font-size:12px; font-weight:600;">CAMERA IS TURNED ON</span>
+              <span style="color:var(--muted); font-size:11px; text-align:center; max-width:220px; line-height:1.4;">Mirror mode active on device. Live stream paused to conserve bandwidth.</span>
+            </div>
+            <div id="dockFrameOverlay" class="screen-sleep-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.85); flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+              <span class="badge" style="color:var(--muted); font-size:12px;">SCREEN ASLEEP</span>
+              <button class="btn sm" onclick="wakeDevice()">Wake Screen</button>
+            </div>
+          </div>
+        </div>
+        <div class="rail-controls">
+          <div class="seg">
+            <button class="btn accent-sand" id="btnLand" onclick="setDeviceOrientation('landscape')">Landscape</button>
+            <button class="btn" id="btnPort" onclick="setDeviceOrientation('portrait')">Portrait</button>
+          </div>
+          <label class="inline-check">
+            <input type="checkbox" id="autoRot" onchange="toggleAutoRotate(this.checked)"> Auto-rotate
+          </label>
+        </div>
+      </section>
+
+      <section class="sect">
+        <div class="card-head">
+          <h2>Scene</h2>
+          <span class="meta" id="curSceneLabel">Desk</span>
+        </div>
+        <div class="pill-grid">
+          <button class="btn" data-scene="desk" onclick="setScene('desk')">Desk</button>
+          <button class="btn" data-scene="mountains" onclick="setScene('mountains')">Mountains</button>
+          <button class="btn" data-scene="sakura" onclick="setScene('sakura')">Sakura</button>
+          <button class="btn" data-scene="sky" onclick="setScene('sky')">Sky</button>
+        </div>
+      </section>
+
+      <section class="sect grow">
+        <div class="card-head">
+          <h2>Device</h2>
+          <span class="status-badge awake" id="scrBadge">Awake</span>
+        </div>
+        <div class="kv"><span class="k">Battery</span><span class="v" id="mBat">--%</span></div>
+        <div class="kv"><span class="k">Temperature</span><span class="v" id="mTemp">-- °C</span></div>
+        <div class="kv"><span class="k">Charge guard</span><span class="v" id="mGuard">50-60% Limit</span></div>
+        <div class="bottom-actions pill-grid">
+          <button class="btn" id="btnWake" onclick="wakeDevice()">Wake</button>
+          <button class="btn" id="btnSleep" onclick="sleepDevice()">Sleep</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Panel 2: things you do while studying -->
+    <div class="panel">
+      <section class="sect">
+        <div class="card-head"><h2>Focus</h2></div>
+        <div class="timer-readout" id="tmState">Ready</div>
+        <div class="pills">
+          <button class="btn" onclick="timer(25, 'Focus')">Focus 25</button>
+          <button class="btn" onclick="timer(50, 'Deep Work')">Deep 50</button>
+          <button class="btn" onclick="timer(5, 'Break')">Break 5</button>
+          <button class="btn danger" onclick="post('/api/timer', {action:'stop'})">Stop</button>
+        </div>
+      </section>
+
+      <section class="sect grow">
+        <div class="card-head">
+          <h2>Tasks</h2>
+          <span class="meta" id="taskCount">0 tasks</span>
+        </div>
+        <ul class="task-list" id="tasksUl"></ul>
+        <div class="field-row" style="margin-top:auto;">
+          <input id="newTask" placeholder="Add a task and press Enter" onkeydown="if(event.key==='Enter')addTask()">
+          <button class="btn sm" style="margin-top:4px;" onclick="addTask()">Add</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Panel 3: alarms -->
+    <div class="panel" id="alarmsCard">
+      <section class="sect grow">
+        <div class="card-head">
+          <h2>Alarms</h2>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="meta" id="alarmsHeaderCount">0 alarms</span>
+            <button class="btn sm" onclick="openModal('addAlarmModal')">+ New</button>
+          </div>
+        </div>
+
+        <div class="ringing" id="ringingBanner">
+          <div>
+            <div class="kicker">Ringing now</div>
+            <div class="name" id="ringingTag">WAKE UP</div>
+            <div class="sub" id="ringingMeta">homecoming.mp3</div>
+          </div>
+          <button class="btn danger-fill" onclick="dismissAlarmNow()">Stop</button>
+        </div>
+
+        <div class="solar" id="solarInfoBar">
+          <span>Sunrise <b id="solarSunriseText">--:--</b></span>
+          <span>Sunset <b id="solarSunsetText">--:--</b></span>
+        </div>
+
+        <ul class="alarms-list" id="alarmsUl"></ul>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- POPUP: new alarm -->
+  <div id="addAlarmModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeModal('addAlarmModal')">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="title">New alarm</div>
+        <button class="btn sm ghost" onclick="closeModal('addAlarmModal')">Close</button>
+      </div>
+
+      <div class="alarm-form">
+        <div class="af-left">
+          <div id="almTimeContainer">
+            <label style="margin-top:0;">Time</label>
+            <input id="almTime" type="hidden" value="07:00">
+            <div class="clockpicker" id="almClock"></div>
+          </div>
+          <div id="almOffsetContainer" style="display:none;">
+            <label style="margin-top:0;">Offset from sun (min)</label>
+            <input id="almOffset" type="number" value="0" placeholder="0 or -15">
+          </div>
+        </div>
+        <div class="af-right">
+          <div>
+            <label style="margin-top:0;">Label</label>
+            <input id="almTag" placeholder="Morning, Study…">
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="almType" onchange="onAlarmTypeChange()">
+              <option value="fixed">Fixed time</option>
+              <option value="sunrise">Sunrise</option>
+              <option value="sunset">Sunset</option>
+            </select>
+          </div>
+          <div>
+            <label>Sound</label>
+            <select id="almSound">
+              <option value="homecoming.mp3">homecoming.mp3 (Default)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-selector-wrap" id="almDaysWrap">
+        <div class="day-top">
+          <label>Repeat</label>
+          <div class="day-presets">
+            <button type="button" class="preset-chip" data-preset="daily" onclick="setDayPreset('alm', 'daily')">Daily</button>
+            <button type="button" class="preset-chip" data-preset="weekdays" onclick="setDayPreset('alm', 'weekdays')">Weekdays</button>
+            <button type="button" class="preset-chip" data-preset="weekends" onclick="setDayPreset('alm', 'weekends')">Weekends</button>
+            <button type="button" class="preset-chip active" data-preset="once" onclick="setDayPreset('alm', 'once')">Once</button>
+          </div>
+        </div>
+        <div class="day-chips-grid">
+          <button type="button" class="day-chip" data-day="1" onclick="toggleDayChip('alm', 1)">Mon</button>
+          <button type="button" class="day-chip" data-day="2" onclick="toggleDayChip('alm', 2)">Tue</button>
+          <button type="button" class="day-chip" data-day="3" onclick="toggleDayChip('alm', 3)">Wed</button>
+          <button type="button" class="day-chip" data-day="4" onclick="toggleDayChip('alm', 4)">Thu</button>
+          <button type="button" class="day-chip" data-day="5" onclick="toggleDayChip('alm', 5)">Fri</button>
+          <button type="button" class="day-chip" data-day="6" onclick="toggleDayChip('alm', 6)">Sat</button>
+          <button type="button" class="day-chip" data-day="7" onclick="toggleDayChip('alm', 7)">Sun</button>
+        </div>
+        <div class="day-summary-text" id="almDaysSummary">Once (will disable after ringing)</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn primary" style="flex:1;" onclick="addAlarmNow().then(() => closeModal('addAlarmModal'))">Create alarm</button>
+        <button class="btn" onclick="testAlarmRingNow()">Test ring</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP: edit alarm -->
+  <div id="editAlarmModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeEditAlarmModal()">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="title">Edit alarm</div>
+        <button class="btn sm ghost" onclick="closeEditAlarmModal()">Close</button>
+      </div>
+
+      <input type="hidden" id="editAlmId">
+
+      <div class="alarm-form">
+        <div class="af-left">
+          <div id="editAlmTimeContainer">
+            <label style="margin-top:0;">Time</label>
+            <input id="editAlmTime" type="hidden" value="07:00">
+            <div class="clockpicker" id="editAlmClock"></div>
+          </div>
+          <div id="editAlmOffsetContainer" style="display:none;">
+            <label style="margin-top:0;">Offset from sun (min)</label>
+            <input id="editAlmOffset" type="number" value="0" placeholder="0 or -15">
+          </div>
+        </div>
+        <div class="af-right">
+          <div>
+            <label style="margin-top:0;">Label</label>
+            <input id="editAlmTag" placeholder="Morning, Study…">
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="editAlmType" onchange="onEditAlarmTypeChange()">
+              <option value="fixed">Fixed time</option>
+              <option value="sunrise">Sunrise</option>
+              <option value="sunset">Sunset</option>
+            </select>
+          </div>
+          <div>
+            <label>Sound</label>
+            <select id="editAlmSound">
+              <option value="homecoming.mp3">homecoming.mp3 (Default)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-selector-wrap" id="editAlmDaysWrap">
+        <div class="day-top">
+          <label>Repeat</label>
+          <div class="day-presets">
+            <button type="button" class="preset-chip" data-preset="daily" onclick="setDayPreset('edit', 'daily')">Daily</button>
+            <button type="button" class="preset-chip" data-preset="weekdays" onclick="setDayPreset('edit', 'weekdays')">Weekdays</button>
+            <button type="button" class="preset-chip" data-preset="weekends" onclick="setDayPreset('edit', 'weekends')">Weekends</button>
+            <button type="button" class="preset-chip" data-preset="once" onclick="setDayPreset('edit', 'once')">Once</button>
+          </div>
+        </div>
+        <div class="day-chips-grid">
+          <button type="button" class="day-chip" data-day="1" onclick="toggleDayChip('edit', 1)">Mon</button>
+          <button type="button" class="day-chip" data-day="2" onclick="toggleDayChip('edit', 2)">Tue</button>
+          <button type="button" class="day-chip" data-day="3" onclick="toggleDayChip('edit', 3)">Wed</button>
+          <button type="button" class="day-chip" data-day="4" onclick="toggleDayChip('edit', 4)">Thu</button>
+          <button type="button" class="day-chip" data-day="5" onclick="toggleDayChip('edit', 5)">Fri</button>
+          <button type="button" class="day-chip" data-day="6" onclick="toggleDayChip('edit', 6)">Sat</button>
+          <button type="button" class="day-chip" data-day="7" onclick="toggleDayChip('edit', 7)">Sun</button>
+        </div>
+        <div class="day-summary-text" id="editAlmDaysSummary">Once (will disable after ringing)</div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <span class="title">Enabled</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="editAlmEnabled" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn primary" style="flex:1;" onclick="saveEditedAlarm()">Save</button>
+        <button class="btn" onclick="testEditAlarmSound()">Preview sound</button>
+        <button class="btn ghost" onclick="closeEditAlarmModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP: settings (everything you set once and forget) -->
+  <div id="settingsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeModal('settingsModal')">
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="title">Settings</div>
+        <button class="btn sm ghost" onclick="closeModal('settingsModal')">Close</button>
+      </div>
+
+      <div class="modal-section">
+        <h3>Display</h3>
+        <div class="row">
+          <div>
+            <div class="title">Clock format</div>
+            <div class="sub" id="curTimeFormatLabel">12-Hour (Default)</div>
+          </div>
+          <div class="seg">
+            <button class="btn accent-sand" id="btnFmt12" onclick="setTimeFormat('12h')">12-hour</button>
+            <button class="btn" id="btnFmt24" onclick="setTimeFormat('24h')">24-hour</button>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Hardware RTC & Time Sync</div>
+            <div class="sub">Syncs phone system clock & hardware RTC chip</div>
+          </div>
+          <button class="btn sm" id="btnSyncTime" onclick="syncDeviceTime()">Sync Clock</button>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Screen timeout</div>
+            <div class="sub">Shorter timeouts reduce image retention</div>
+          </div>
+          <select id="timeoutSel" style="width:auto; margin:0;" onchange="post('/api/screen/timeout', {timeout_seconds: +this.value})">
+            <option value="60">1 min (Recommended)</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+            <option value="1800">30 min (Study mode)</option>
+          </select>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Kiosk Lock (Touch Suppression)</div>
+            <div class="sub">Consumes 100% of digitizer touches to prevent phantom clicks. Turn off if your touchscreen is working normally.</div>
+          </div>
+          <label class="toggle-switch" title="Toggle Kiosk Lock">
+            <input type="checkbox" id="kioskLockToggle" onchange="toggleKioskLock(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Hardware Volume Key Remapping</div>
+            <div class="sub">Intercepts volume buttons for dock page navigation. Turn off to keep volume buttons controlling normal phone audio.</div>
+          </div>
+          <label class="toggle-switch" title="Toggle Hardware Key Remapping">
+            <input type="checkbox" id="hwKeysToggle" onchange="toggleHardwareKeys(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Proximity gestures</div>
+            <div class="sub">Wave to sleep or stop an alarm</div>
+          </div>
+          <label class="toggle-switch" title="Toggle proximity gestures">
+            <input type="checkbox" id="proxGesturesToggle" onchange="toggleProximityGestures(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div>
+            <div class="title">Night Mode</div>
+            <div class="sub">Silences hourly wakes, sets brightness to 1, applies minimal dark theme</div>
+          </div>
+          <label class="toggle-switch" title="Toggle Night Mode">
+            <input type="checkbox" id="nightModeToggle" onchange="toggleNightMode(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="row" id="nightScheduleRow">
+          <div>
+            <div class="title">Night Mode Hours</div>
+            <div class="sub">Scheduled start and end times</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <select id="nightStartSel" style="width:auto; margin:0;" onchange="updateNightSchedule()">
+              <option value="20">8:00 PM (20:00)</option>
+              <option value="21">9:00 PM (21:00)</option>
+              <option value="22">10:00 PM (22:00)</option>
+              <option value="23" selected>11:00 PM (23:00)</option>
+              <option value="0">12:00 AM (00:00)</option>
+              <option value="1">1:00 AM (01:00)</option>
+              <option value="2">2:00 AM (02:00)</option>
+            </select>
+            <span style="color:var(--muted); font-size:12px;">to</span>
+            <select id="nightEndSel" style="width:auto; margin:0;" onchange="updateNightSchedule()">
+              <option value="5">5:00 AM (05:00)</option>
+              <option value="6" selected>6:00 AM (06:00)</option>
+              <option value="7">7:00 AM (07:00)</option>
+              <option value="8">8:00 AM (08:00)</option>
+              <option value="9">9:00 AM (09:00)</option>
+              <option value="10">10:00 AM (10:00)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Location</h3>
+        <div class="row">
+          <div>
+            <div class="title">Dynamic location</div>
+            <div class="sub">Follows your network so weather and sun times stay right</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button class="btn sm" id="btnAutoLoc" onclick="autoDetectLocationNow()">Auto-Detect Now</button>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoLocCheck" onchange="toggleAutoLocation(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div><label style="margin-top:0;">City label</label><input id="placeInp"></div>
+          <div>
+            <label style="margin-top:0;">Search city</label>
+            <div class="field-row"><input id="searchCityInp" placeholder="e.g. Kolkata"><button class="btn sm" style="margin-top:4px;" onclick="lookupCity()">Find</button></div>
+          </div>
+          <div><label>Latitude</label><input id="latInp" type="number" step="0.0001"></div>
+          <div><label>Longitude</label><input id="lonInp" type="number" step="0.0001"></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Battery protection</h3>
+        <div class="grid-2">
+          <div><label style="margin-top:0;">Pause charge at %</label><input id="pauseCapInp" type="number"></div>
+          <div><label style="margin-top:0;">Resume charge at %</label><input id="resumeCapInp" type="number"></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Default Home Launcher</h3>
+        <div class="row">
+          <div>
+            <div class="title">Active Launcher</div>
+            <div class="sub" id="curLauncherLabel">Checking launcher status...</div>
+          </div>
+          <div class="seg" style="display:flex; gap:6px;">
+            <button class="btn sm accent-sand" id="btnSetDockLauncher" onclick="setDefaultLauncher('dock')">Switch to Dock Launcher</button>
+            <button class="btn sm" id="btnRestoreStockLauncher" onclick="setDefaultLauncher('stock')">Switch to Stock Launcher</button>
+          </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button class="btn sm ghost" onclick="openSystemHomeSettings()">Open Android Home Settings</button>
+          <button class="btn sm ghost" onclick="refreshLaunchers()">Refresh List</button>
+        </div>
+        <div id="launchersList" style="margin-top:10px; font-size:12px; color:var(--muted); font-family:var(--mono);"></div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Countdowns</h3>
+        <label style="margin-top:0;">One per line: YYYY-MM-DD Label</label>
+        <textarea id="cdsInp" rows="3"></textarea>
+      </div>
+
+      <div class="modal-section">
+        <p class="note">Volume rocker: audio is locked to maximum (smart speaker mode). The physical volume buttons are reserved for future page and tab actions.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn primary" style="flex:1;" onclick="saveSettings()">Save settings</button>
+        <span class="meta" id="saveMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP: diagnostic logs -->
+  <div id="logsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeModal('logsModal')">
+    <div class="modal-card wide" style="max-width:820px; max-height:85vh; display:flex; flex-direction:column;">
+      <div class="modal-head">
+        <div>
+          <div class="title">Diagnostic Logs</div>
+          <div class="sub" style="font-size:12px; color:var(--muted); margin-top:2px;">Zero-permission operational health, lifecycle events & exceptions</div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="btn sm" onclick="fetchLogs()">Refresh</button>
+          <button class="btn sm" onclick="copyLogs()">Copy</button>
+          <button class="btn sm danger" onclick="clearLogs()">Clear</button>
+          <button class="btn sm ghost" onclick="closeModal('logsModal')">Close</button>
+        </div>
+      </div>
+      <div style="flex:1; min-height:360px; max-height:55vh; background:var(--field); border:1px solid var(--line); border-radius:8px; padding:12px; overflow-y:auto; font-family:var(--mono); font-size:11px; line-height:1.4; white-space:pre-wrap; color:#c5cbd4;" id="logsContent">
+Loading logs...
+      </div>
+      <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--dim);">
+        <span id="logsStatus">0 entries</span>
+        <span>Storage: private /data/user/0/dev.dwell.app/files/logs/dock.log</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const q = new URLSearchParams(location.search);
+    if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
+    const TOKEN = localStorage.getItem("dockToken") || "";
+    const authQuery = () => TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "";
+
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const escapeHtml = esc;
+    let currentAlarms = [];
+    let addSelectedDays = [];
+    let editSelectedDays = [];
+
+    const DAY_LABELS = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 7: "Sun" };
+
+    function formatRepeatDays(days) {
+      if (!Array.isArray(days) || days.length === 0) return "Once";
+      const sorted = [...days].map(Number).sort((a, b) => a - b);
+      if (sorted.length === 7) return "Daily";
+      if (sorted.length === 5 && sorted.every((d, i) => d === i + 1)) return "Weekdays";
+      if (sorted.length === 2 && sorted[0] === 6 && sorted[1] === 7) return "Weekends";
+      return sorted.map(d => DAY_LABELS[d] || d).join(", ");
+    }
+
+    function updateDaySelectorUI(prefix) {
+      const days = prefix === "edit" ? editSelectedDays : addSelectedDays;
+      const wrap = document.getElementById(prefix === "edit" ? "editAlmDaysWrap" : "almDaysWrap");
+      if (!wrap) return;
+
+      const buttons = wrap.querySelectorAll(".day-chip");
+      buttons.forEach(btn => {
+        const d = parseInt(btn.dataset.day, 10);
+        if (days.includes(d)) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+
+      const sorted = [...days].map(Number).sort((a, b) => a - b);
+      const isDaily = sorted.length === 7;
+      const isWeekdays = sorted.length === 5 && sorted.every((d, i) => d === i + 1);
+      const isWeekends = sorted.length === 2 && sorted[0] === 6 && sorted[1] === 7;
+      const isOnce = sorted.length === 0;
+
+      wrap.querySelectorAll(".preset-chip").forEach(chip => {
+        const act = chip.dataset.preset;
+        if ((act === "daily" && isDaily) ||
+            (act === "weekdays" && isWeekdays) ||
+            (act === "weekends" && isWeekends) ||
+            (act === "once" && isOnce)) {
+          chip.classList.add("active");
+        } else {
+          chip.classList.remove("active");
+        }
+      });
+
+      const summaryEl = document.getElementById(prefix === "edit" ? "editAlmDaysSummary" : "almDaysSummary");
+      if (summaryEl) {
+        let text = formatRepeatDays(days);
+        if (days.length === 0) text += " (will disable after ringing)";
+        else if (days.length === 7) text += " (rings every day)";
+        else text += ` (rings every ${text})`;
+        summaryEl.textContent = text;
+      }
+    }
+
+    function toggleDayChip(prefix, day) {
+      let list = prefix === "edit" ? editSelectedDays : addSelectedDays;
+      const dNum = parseInt(day, 10);
+      const idx = list.indexOf(dNum);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+      } else {
+        list.push(dNum);
+      }
+      list.sort((a, b) => a - b);
+      if (prefix === "edit") editSelectedDays = list;
+      else addSelectedDays = list;
+      updateDaySelectorUI(prefix);
+    }
+
+    function setDayPreset(prefix, preset) {
+      let list = [];
+      if (preset === "daily") list = [1, 2, 3, 4, 5, 6, 7];
+      else if (preset === "weekdays") list = [1, 2, 3, 4, 5];
+      else if (preset === "weekends") list = [6, 7];
+      else if (preset === "once") list = [];
+
+      if (prefix === "edit") editSelectedDays = list;
+      else addSelectedDays = list;
+      updateDaySelectorUI(prefix);
+    }
+
+    function openEditAlarmModal(id) {
+      const a = (currentAlarms || []).find(x => x.id === id);
+      if (!a) return;
+
+      document.getElementById("editAlmId").value = a.id;
+      document.getElementById("editAlmTag").value = a.tag || "Alarm";
+      document.getElementById("editAlmType").value = a.type || "fixed";
+      document.getElementById("editAlmTime").value = a.time || "07:00";
+      document.getElementById("editAlmOffset").value = a.offsetMinutes != null ? a.offsetMinutes : 0;
+
+      const editSel = document.getElementById("editAlmSound");
+      if (editSel) {
+        const addSel = document.getElementById("almSound");
+        if (addSel) editSel.innerHTML = addSel.innerHTML;
+        editSel.value = a.sound || "homecoming.mp3";
+      }
+
+      editSelectedDays = Array.isArray(a.days) ? a.days.map(Number) : [];
+      updateDaySelectorUI("edit");
+
+      const enCheck = document.getElementById("editAlmEnabled");
+      if (enCheck) enCheck.checked = a.enabled !== false;
+
+      onEditAlarmTypeChange();
+
+      const modal = document.getElementById("editAlarmModal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeEditAlarmModal() {
+      const modal = document.getElementById("editAlarmModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function onEditAlarmTypeChange() {
+      const type = document.getElementById("editAlmType").value;
+      const timeBox = document.getElementById("editAlmTimeContainer");
+      const offsetBox = document.getElementById("editAlmOffsetContainer");
+      if (type === "fixed") {
+        timeBox.style.display = "";
+        offsetBox.style.display = "none";
+      } else {
+        timeBox.style.display = "none";
+        offsetBox.style.display = "";
+      }
+    }
+
+    async function saveEditedAlarm() {
+      const id = document.getElementById("editAlmId").value;
+      if (!id) return;
+
+      const tag = document.getElementById("editAlmTag").value.trim() || "Alarm";
+      const type = document.getElementById("editAlmType").value;
+      const time = document.getElementById("editAlmTime").value || "07:00";
+      const offsetMinutes = parseInt(document.getElementById("editAlmOffset").value) || 0;
+      const sound = document.getElementById("editAlmSound").value || "homecoming.mp3";
+      const enabled = document.getElementById("editAlmEnabled").checked;
+
+      const patch = {
+        tag,
+        type,
+        sound,
+        enabled,
+        days: editSelectedDays
+      };
+      if (type === "fixed") patch.time = time;
+      else patch.offsetMinutes = offsetMinutes;
+
+      await post('/api/alarms/' + id, patch);
+      closeEditAlarmModal();
+      sync();
+    }
+
+    async function testEditAlarmSound() {
+      const tag = document.getElementById("editAlmTag").value.trim() || "ALARM PREVIEW";
+      const sound = document.getElementById("editAlmSound").value || "homecoming.mp3";
+      await post("/api/alarms/test", { tag, sound });
+      sync();
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeEditAlarmModal();
+      }
+    });
+
+    async function api(path, body) {
+      try {
+        const url = path.includes("?") 
+          ? (TOKEN && !path.includes("token=") ? `${path}&token=${encodeURIComponent(TOKEN)}` : path) 
+          : (TOKEN ? `${path}?token=${encodeURIComponent(TOKEN)}` : path);
+        const res = await fetch(url, {
+          method: body === undefined ? "GET" : "POST",
+          headers: { "X-Token": TOKEN, "Content-Type": "application/json" },
+          body: body === undefined ? undefined : JSON.stringify(body)
+        });
+        if (!res.ok) {
+          if (res.status === 401 && !TOKEN) {
+            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", "36769d33");
+            if (entered) {
+              localStorage.setItem("dockToken", entered);
+              location.reload();
+            }
+          }
+          return null;
+        }
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function post(p, b = {}) {
+      const res = await api(p, b);
+      sync();
+      return res;
+    }
+
+    const timer = (m, l) => post('/api/timer', { action: 'start', minutes: m, label: l });
+    function setScene(s) {
+      post('/api/settings', { scene: s });
+      document.getElementById("curSceneLabel").textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      setTimeout(refreshMirror, 300);
+    }
+
+    let currentTimeFormat = '12h';
+
+    async function setTimeFormat(fmt) {
+      currentTimeFormat = fmt;
+      updateTimeFormatUI(fmt);
+      await post('/api/settings', { timeFormat: fmt });
+      setTimeout(refreshMirror, 300);
+    }
+
+    function updateTimeFormatUI(fmt) {
+      currentTimeFormat = fmt;
+      const is12 = fmt !== '24h';
+      const lbl = document.getElementById("curTimeFormatLabel");
+      if (lbl) lbl.textContent = is12 ? "12-Hour (Default)" : "24-Hour";
+      const b12 = document.getElementById("btnFmt12");
+      const b24 = document.getElementById("btnFmt24");
+      if (b12 && b24) {
+        b12.className = is12 ? "btn accent-sand" : "btn";
+        b24.className = is12 ? "btn" : "btn accent-slate";
+      }
+    }
+
+    /* Tactile Wake & Sleep with Optimistic UI */
+    async function wakeDevice() {
+      const badge = document.getElementById("scrBadge");
+      const btn = document.getElementById("btnWake");
+      badge.className = "status-badge waking";
+      badge.textContent = "Waking...";
+      btn.disabled = true;
+      try {
+        await api('/api/screen/wake', {});
+        badge.className = "status-badge awake";
+        badge.textContent = "Awake";
+      } catch (e) {
+        badge.className = "status-badge awake";
+        badge.textContent = "Awake";
+      } finally {
+        btn.disabled = false;
+        setTimeout(refreshMirror, 800);
+      }
+    }
+
+    async function sleepDevice() {
+      const badge = document.getElementById("scrBadge");
+      const btn = document.getElementById("btnSleep");
+      badge.className = "status-badge asleep";
+      badge.textContent = "Sleeping...";
+      btn.disabled = true;
+      try {
+        await api('/api/screen/sleep', {});
+        badge.className = "status-badge asleep";
+        badge.textContent = "Asleep";
+      } catch (e) {
+        badge.className = "status-badge asleep";
+        badge.textContent = "Asleep";
+      } finally {
+        btn.disabled = false;
+        setTimeout(refreshMirror, 600);
+      }
+    }
+
+    /* Orientation & Layout Actuation */
+    async function setDeviceOrientation(mode) {
+      const isLand = mode === "landscape";
+      updateBezelOrientation(isLand ? "landscape" : "portrait");
+      document.getElementById("autoRot").checked = false;
+      await post('/api/screen/rotate', { orientation: mode, auto_rotate: false });
+      setTimeout(refreshMirror, 500);
+    }
+
+    async function toggleDeviceOrientation() {
+      const bezel = document.getElementById("phoneBezel");
+      const isPort = bezel.classList.contains("portrait");
+      await setDeviceOrientation(isPort ? "landscape" : "portrait");
+    }
+
+    async function toggleAutoRotate(enabled) {
+      await post('/api/screen/rotate', { auto_rotate: enabled });
+      refreshMirror();
+    }
+
+    function updateBezelOrientation(mode) {
+      const bezel = document.getElementById("phoneBezel");
+      const btnLand = document.getElementById("btnLand");
+      const btnPort = document.getElementById("btnPort");
+      if (mode === "landscape") {
+        bezel.classList.remove("portrait");
+        bezel.classList.add("landscape");
+        if (btnLand) { btnLand.className = "btn accent-sand"; }
+        if (btnPort) { btnPort.className = "btn"; }
+      } else {
+        bezel.classList.remove("landscape");
+        bezel.classList.add("portrait");
+        if (btnPort) { btnPort.className = "btn accent-sand"; }
+        if (btnLand) { btnLand.className = "btn"; }
+      }
+    }
+
+    function updateProximityGesturesUI(enabled) {
+      const chk = document.getElementById("proxGesturesToggle");
+      if (chk && document.activeElement !== chk) chk.checked = !!enabled;
+    }
+
+    async function toggleProximityGestures(checked) {
+      try {
+        await post("/api/screen/proximity", { enabled: checked });
+      } catch (e) {
+        console.error("Failed to toggle proximity gestures:", e);
+      }
+    }
+
+    async function syncDeviceTime() {
+      const btn = document.getElementById("btnSyncTime");
+      if (btn) btn.textContent = "Syncing...";
+      try {
+        await post("/api/system/time-sync", { timestamp: Date.now() });
+        refreshMirror();
+      } catch (e) {
+        console.error("Failed to sync clock:", e);
+      } finally {
+        if (btn) btn.textContent = "Sync Clock";
+      }
+    }
+
+    async function toggleKioskLock(checked) {
+      await post('/api/settings', { kioskLock: checked });
+    }
+
+    async function toggleHardwareKeys(checked) {
+      await post('/api/settings', { hardwareKeysEnabled: checked });
+    }
+
+    async function toggleNightMode(checked) {
+      await post('/api/settings', { nightMode: checked });
+      const row = document.getElementById("nightScheduleRow");
+      if (row) row.style.opacity = checked ? "1" : "0.5";
+    }
+
+    async function updateNightSchedule() {
+      const ns = +document.getElementById("nightStartSel").value;
+      const ne = +document.getElementById("nightEndSel").value;
+      await post('/api/settings', { nightStart: ns, nightEnd: ne });
+    }
+
+    /* Diagnostic Logs */
+    function openLogsModal() {
+      openModal('logsModal');
+      fetchLogs();
+    }
+
+    async function fetchLogs() {
+      const logsEl = document.getElementById("logsContent");
+      const statusEl = document.getElementById("logsStatus");
+      if (logsEl) logsEl.textContent = "Loading diagnostic logs...";
+      try {
+        const res = await fetch('/api/system/logs?limit=500' + (TOKEN ? '&token=' + encodeURIComponent(TOKEN) : ''));
+        const data = await res.json();
+        const logs = data.logs || [];
+        if (logsEl) {
+          logsEl.textContent = logs.length > 0 ? logs.join('\n') : "No log entries recorded yet.";
+          logsEl.scrollTop = logsEl.scrollHeight;
+        }
+        if (statusEl) statusEl.textContent = `${logs.length} entries (showing latest ${logs.length})`;
+      } catch (e) {
+        if (logsEl) logsEl.textContent = "Failed to load logs: " + e.message;
+      }
+    }
+
+    async function clearLogs() {
+      if (!confirm("Clear all diagnostic logs?")) return;
+      try {
+        await post('/api/system/logs/clear', {});
+        fetchLogs();
+      } catch (e) {
+        alert("Failed to clear logs: " + e.message);
+      }
+    }
+
+    function copyLogs() {
+      const logsEl = document.getElementById("logsContent");
+      if (!logsEl) return;
+      navigator.clipboard.writeText(logsEl.textContent).then(() => {
+        alert("Logs copied to clipboard!");
+      }).catch(err => {
+        alert("Could not copy logs: " + err);
+      });
+    }
+
+    /* Home Launcher Management */
+    async function refreshLaunchers() {
+      const label = document.getElementById("curLauncherLabel");
+      const listEl = document.getElementById("launchersList");
+      const btnDock = document.getElementById("btnSetDockLauncher");
+      const btnStock = document.getElementById("btnRestoreStockLauncher");
+      if (label) label.textContent = "Querying installed launchers...";
+
+      try {
+        const res = await fetch('/api/system/launchers' + (TOKEN ? '?token=' + encodeURIComponent(TOKEN) : ''));
+        const data = await res.json();
+        const isDock = data.isDockDefault;
+        const current = data.currentDefault;
+        const launchers = data.launchers || [];
+
+        if (label) {
+          if (current) {
+            label.textContent = `${current.label || current.package} (${isDock ? "Desk Dock - Active" : "Stock Launcher"})`;
+          } else {
+            label.textContent = "No default home set (Chooser active)";
+          }
+        }
+
+        if (btnDock) btnDock.classList.toggle("accent-sand", isDock);
+        if (btnStock) btnStock.classList.toggle("accent-sand", !isDock && current != null);
+
+        if (listEl) {
+          listEl.innerHTML = launchers.map(l => {
+            const defBadge = l.isDefault ? " <span style='color:var(--pastel-sage)'>[DEFAULT]</span>" : "";
+            const dockBadge = l.isDeskDock ? " <span style='color:var(--pastel-sand)'>[DESK DOCK]</span>" : "";
+            return `<div>• ${escapeHtml(l.label || l.package)} (${escapeHtml(l.package)})${defBadge}${dockBadge}</div>`;
+          }).join("");
+        }
+      } catch (e) {
+        if (label) label.textContent = "Error querying launchers: " + e.message;
+      }
+    }
+
+    async function setDefaultLauncher(type) {
+      if (type === 'dock') {
+        const res = await post('/api/system/launchers/set-default', {});
+        if (res && res.ok) {
+          setTimeout(refreshMirror, 1000);
+        } else {
+          alert("Failed to switch to Desk Dock: " + (res?.message || res?.error || "error"));
+        }
+      } else if (type === 'stock') {
+        if (!confirm("Switch to stock launcher? The phone will return to its standard Android home screen.")) return;
+        const res = await post('/api/system/launchers/restore-stock', {});
+        if (res && res.ok) {
+          setTimeout(refreshMirror, 1000);
+        } else {
+          alert("Failed to restore stock launcher: " + (res?.message || res?.error || "error"));
+        }
+      }
+      refreshLaunchers();
+    }
+
+    async function openSystemHomeSettings() {
+      await post('/api/system/launchers/settings', {});
+    }
+
+    let lastMirrorActive = false;
+    /* Live Mirror Refresh (Genuine Hardware Screen Snapshot) */
+    function refreshMirror() {
+      if (lastMirrorActive) return; // Don't request camera snapshot when mirror is active
+      const snapImg = document.getElementById("dockSnapshot");
+      const token = new URLSearchParams(location.search).get("token") || "";
+      if (snapImg) {
+        snapImg.src = "/api/screen/snapshot?token=" + encodeURIComponent(token) + "&_t=" + Date.now();
+      }
+      const timeLbl = document.getElementById("snapTime");
+      if (timeLbl) {
+        const now = new Date();
+        timeLbl.textContent = "Hardware: " + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0');
+      }
+    }
+
+    let loadedSettings = false;
+    async function sync() {
+      try {
+        const [st, scr] = await Promise.all([api("/api/state"), api("/api/screen/status")]);
+        if (!st) return;
+
+        const isMirror = !!st.mirrorActive;
+        const camOverlay = document.getElementById("dockCameraOverlay");
+        if (camOverlay) {
+          camOverlay.style.display = isMirror ? "flex" : "none";
+        }
+        if (lastMirrorActive && !isMirror) {
+          // Mirror mode just turned off — resume snapshot streaming!
+          lastMirrorActive = false;
+          refreshMirror();
+        }
+        lastMirrorActive = isMirror;
+
+        const badge = document.getElementById("scrBadge");
+        const overlay = document.getElementById("dockFrameOverlay");
+        const isAwake = scr && (scr.wakefulness === "Awake" || scr.wakefulness === "interactive");
+        if (isAwake) {
+          badge.className = "status-badge awake";
+          badge.textContent = "Awake";
+          if (overlay) overlay.style.display = "none";
+        } else {
+          badge.className = "status-badge asleep";
+          badge.textContent = "Asleep";
+          if (overlay) overlay.style.display = "flex";
+        }
+
+        if (scr?.timeout_s) document.getElementById("timeoutSel").value = scr.timeout_s;
+        if (scr?.auto_rotate !== undefined) document.getElementById("autoRot").checked = !!scr.auto_rotate;
+        if (scr?.orientation) updateBezelOrientation(scr.orientation);
+        const proxActive = scr?.proximity_gestures !== undefined ? scr.proximity_gestures : (st.settings?.proximityGestures ?? true);
+        updateProximityGesturesUI(proxActive);
+
+        document.getElementById("mBat").textContent = (st.battery?.capacity ?? "--") + "%";
+        document.getElementById("mTemp").textContent = (st.battery?.temp_c ?? "--") + " °C";
+        document.getElementById("mGuard").textContent = st.battery?.guard?.charging_allowed ? "Charging" : "50-60% Limit";
+
+        const tm = st.timer;
+        if (tm?.running && tm.endsAt > Date.now()) {
+          const s = Math.round((tm.endsAt - Date.now()) / 1000);
+          document.getElementById("tmState").textContent = Math.floor(s/60) + ":" + String(s%60).padStart(2, '0') + " (" + (tm.label || "Focus") + ")";
+        } else {
+          document.getElementById("tmState").textContent = "Ready";
+        }
+
+        const tasks = st.tasks || [];
+        const open = tasks.filter(t => !t.done).length;
+        document.getElementById("taskCount").textContent = `${open} to do · ${tasks.length - open} done`;
+
+        document.getElementById("tasksUl").innerHTML = tasks.map(t => `
+          <li class="task-item ${t.done ? 'done' : ''}">
+            <label>
+              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="post('/api/tasks/${t.id}', {done: this.checked})">
+              <span>${esc(t.text)}</span>
+            </label>
+            <button class="btn sm ghost" title="Delete task" onclick="post('/api/tasks/${t.id}', {delete: true})">✕</button>
+          </li>
+        `).join("");
+
+        renderAlarmsList(st);
+
+        if (st.settings?.timeFormat) {
+          updateTimeFormatUI(st.settings.timeFormat);
+        }
+
+        if (st.settings?.kioskLock !== undefined) {
+          const kToggle = document.getElementById("kioskLockToggle");
+          if (kToggle) kToggle.checked = !!st.settings.kioskLock;
+        }
+        if (st.settings?.hardwareKeysEnabled !== undefined) {
+          const hkToggle = document.getElementById("hwKeysToggle");
+          if (hkToggle) hkToggle.checked = !!st.settings.hardwareKeysEnabled;
+        }
+        if (st.settings?.nightMode !== undefined) {
+          const nMode = document.getElementById("nightModeToggle");
+          if (nMode) {
+            nMode.checked = !!st.settings.nightMode;
+            const row = document.getElementById("nightScheduleRow");
+            if (row) row.style.opacity = nMode.checked ? "1" : "0.5";
+          }
+        }
+        if (st.settings?.nightStart !== undefined) {
+          const nsSel = document.getElementById("nightStartSel");
+          if (nsSel && document.activeElement !== nsSel) nsSel.value = st.settings.nightStart;
+        }
+        if (st.settings?.nightEnd !== undefined) {
+          const neSel = document.getElementById("nightEndSel");
+          if (neSel && document.activeElement !== neSel) neSel.value = st.settings.nightEnd;
+        }
+
+        if (!loadedSettings && st.settings) {
+          loadedSettings = true;
+          const s = st.settings;
+          document.getElementById("placeInp").value = s.place || "Kolkata, WB";
+          document.getElementById("latInp").value = s.lat ?? 22.5643;
+          document.getElementById("lonInp").value = s.lon ?? 88.3693;
+          document.getElementById("pauseCapInp").value = s.pauseCap ?? 60;
+          document.getElementById("resumeCapInp").value = s.resumeCap ?? 50;
+          document.getElementById("nightStartSel").value = s.nightStart ?? 23;
+          document.getElementById("nightEndSel").value = s.nightEnd ?? 6;
+          document.getElementById("autoLocCheck").checked = s.autoLocation !== false;
+          document.getElementById("cdsInp").value = (s.countdowns || []).map(c => `${c.date} ${c.label}`).join("\n");
+          if (s.scene) {
+            document.getElementById("curSceneLabel").textContent = s.scene.charAt(0).toUpperCase() + s.scene.slice(1);
+          }
+        }
+      } catch (err) {}
+    }
+
+    function addTask() {
+      const inp = document.getElementById("newTask");
+      const txt = inp.value.trim();
+      if (!txt) return;
+      post('/api/tasks', { text: txt });
+      inp.value = "";
+    }
+
+    async function lookupCity() {
+      const val = document.getElementById("searchCityInp").value.trim();
+      if (!val) return;
+      try {
+        const r = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(val))).json();
+        const c = r.results?.[0];
+        if (c) {
+          document.getElementById("latInp").value = c.latitude.toFixed(4);
+          document.getElementById("lonInp").value = c.longitude.toFixed(4);
+          document.getElementById("placeInp").value = c.name + ", " + (c.admin1 || c.country);
+          document.getElementById("autoLocCheck").checked = false;
+          document.getElementById("saveMsg").textContent = "Found " + c.name + " · Press Save";
+        }
+      } catch (e) {}
+    }
+
+    /* Dynamic Geolocation Auto-Detection */
+    async function autoDetectLocationNow() {
+      const btn = document.getElementById("btnAutoLoc");
+      const msg = document.getElementById("saveMsg");
+      btn.disabled = true;
+      btn.textContent = "Detecting...";
+      msg.textContent = "Querying location...";
+
+      try {
+        let lat = null, lon = null, place = null;
+        try {
+          const r = await (await fetch("https://get.geojs.io/v1/ip/geo.json")).json();
+          if (r && r.latitude && r.longitude) {
+            lat = parseFloat(r.latitude);
+            lon = parseFloat(r.longitude);
+            place = r.city ? `${r.city}, ${r.region || r.country || ""}`.trim().replace(/,\s*$/, "") : null;
+          }
+        } catch {}
+
+        if (!lat || !lon) {
+          try {
+            const r2 = await (await fetch("https://ipwho.is/")).json();
+            if (r2 && r2.success) {
+              lat = r2.latitude;
+              lon = r2.longitude;
+              place = r2.city ? `${r2.city}, ${r2.region || r2.country || ""}`.trim().replace(/,\s*$/, "") : null;
+            }
+          } catch {}
+        }
+
+        if (lat && lon) {
+          document.getElementById("latInp").value = lat.toFixed(4);
+          document.getElementById("lonInp").value = lon.toFixed(4);
+          if (place) document.getElementById("placeInp").value = place;
+          document.getElementById("autoLocCheck").checked = true;
+
+          saveSettings(true);
+          msg.textContent = `Auto-detected: ${place || lat + ", " + lon} · Saved!`;
+        } else {
+          msg.textContent = "Could not detect location. Search city manually.";
+        }
+      } catch (e) {
+        msg.textContent = "Detection failed. Check connection.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Auto-Detect Now";
+        setTimeout(() => { if (msg.textContent.includes("Saved")) msg.textContent = ""; }, 3000);
+      }
+    }
+
+    function toggleAutoLocation(checked) {
+      post('/api/settings', { autoLocation: checked });
+      if (checked) autoDetectLocationNow();
+    }
+
+    async function loadAvailableSounds() {
+      try {
+        const data = await api("/api/alarms/sounds");
+        if (data && data.sounds) {
+          const soundOptions = (data.sounds || ["homecoming.mp3"]).map(s => 
+            `<option value="${s}">${s}${s === 'homecoming.mp3' ? ' (Default)' : ''}</option>`
+          ).join("");
+          const sel = document.getElementById("almSound");
+          if (sel) sel.innerHTML = soundOptions;
+          const editSel = document.getElementById("editAlmSound");
+          if (editSel) editSel.innerHTML = soundOptions;
+        }
+      } catch (e) {}
+    }
+
+    function onAlarmTypeChange() {
+      const type = document.getElementById("almType").value;
+      const timeBox = document.getElementById("almTimeContainer");
+      const offsetBox = document.getElementById("almOffsetContainer");
+      if (type === "fixed") {
+        timeBox.style.display = "";
+        offsetBox.style.display = "none";
+      } else {
+        timeBox.style.display = "none";
+        offsetBox.style.display = "";
+      }
+    }
+
+    async function addAlarmNow() {
+      const tag = document.getElementById("almTag").value.trim() || "Alarm";
+      const type = document.getElementById("almType").value;
+      const time = document.getElementById("almTime").value || "07:00";
+      const offsetMinutes = parseInt(document.getElementById("almOffset").value) || 0;
+      const sound = document.getElementById("almSound").value || "homecoming.mp3";
+      
+      const payload = {
+        tag,
+        type,
+        sound,
+        enabled: true,
+        days: addSelectedDays
+      };
+      if (type === "fixed") payload.time = time;
+      else payload.offsetMinutes = offsetMinutes;
+      
+      await post("/api/alarms", payload);
+      document.getElementById("almTag").value = "";
+      setDayPreset('alm', 'once');
+      sync();
+    }
+
+    async function dismissAlarmNow() {
+      await post("/api/alarms/dismiss", {});
+      sync();
+    }
+
+    async function testAlarmRingNow() {
+      const tag = document.getElementById("almTag").value.trim() || "SUNRISE AWAKENING";
+      const sound = document.getElementById("almSound").value || "homecoming.mp3";
+      await post("/api/alarms/test", { tag, sound });
+      sync();
+    }
+
+    async function toggleAlarm(id, enabled) {
+      await post('/api/alarms/' + id, { enabled: enabled });
+      sync();
+    }
+
+    async function deleteAlarmItem(id) {
+      if (!confirm("Delete this alarm?")) return;
+      await post('/api/alarms/' + id, { delete: true });
+      sync();
+    }
+
+    async function testSingleAlarm(id) {
+      const a = (currentAlarms || []).find(x => x.id === id);
+      if (!a) return;
+      await post('/api/alarms/test', { tag: a.tag || "TEST ALARM", sound: a.sound || "homecoming.mp3" });
+      sync();
+    }
+
+    function fmtClock(hhmm) {
+      if (currentTimeFormat === '24h' || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm;
+      const [h, m] = hhmm.split(':').map(Number);
+      return (h % 12 || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'PM' : 'AM');
+    }
+
+    function calcAlarmDisplay(a, solar) {
+      if (a.type === "fixed") {
+        const t = a.time || "07:00";
+        return {
+          time: fmtClock(t),
+          type: "Fixed Time"
+        };
+      }
+      const isRise = a.type === "sunrise";
+      const icon = "";
+      const name = isRise ? "Sunrise" : "Sunset";
+      const baseTimeStr = isRise ? solar?.sunrise : solar?.sunset;
+      if (!baseTimeStr || !baseTimeStr.includes(":")) {
+        return {
+          time: name,
+          type: a.offsetMinutes ? `${name} (${a.offsetMinutes > 0 ? '+' : ''}${a.offsetMinutes}m)` : `${name} (Exact)`
+        };
+      }
+      const [hStr, mStr] = baseTimeStr.split(":");
+      let totalMin = parseInt(hStr, 10) * 60 + parseInt(mStr, 10) + (a.offsetMinutes || 0);
+      totalMin = (totalMin % 1440 + 1440) % 1440;
+      const th = Math.floor(totalMin / 60);
+      const tm = totalMin % 60;
+      const hhmm = String(th).padStart(2, '0') + ":" + String(tm).padStart(2, '0');
+      const offsetNote = a.offsetMinutes ? ` (${a.offsetMinutes > 0 ? '+' : ''}${a.offsetMinutes}m)` : " (Exact)";
+      return {
+        time: fmtClock(hhmm),
+        type: `${name}${offsetNote}`
+      };
+    }
+
+    function renderAlarmsList(st) {
+      const alarms = st.alarms || [];
+      currentAlarms = alarms;
+      const ringing = st.isAlarmRinging;
+      const rAlm = st.ringingAlarm;
+      const countEl = document.getElementById("alarmsHeaderCount");
+      const ul = document.getElementById("alarmsUl");
+      const banner = document.getElementById("ringingBanner");
+      const rTag = document.getElementById("ringingTag");
+      const rMeta = document.getElementById("ringingMeta");
+      
+      if (countEl) {
+        const act = alarms.filter(a => a.enabled !== false).length;
+        countEl.textContent = `${act} active · ${alarms.length} total`;
+      }
+      
+      if (banner) {
+        if (ringing && rAlm) {
+          banner.style.display = "flex";
+          if (rTag) rTag.textContent = rAlm.tag || "ALARM RINGING";
+          if (rMeta) rMeta.textContent = `Playing ${rAlm.sound || 'homecoming.mp3'}`;
+        } else {
+          banner.style.display = "none";
+        }
+      }
+      
+      if (st.solar) {
+        const rise = document.getElementById("solarSunriseText");
+        const set = document.getElementById("solarSunsetText");
+        if (rise) rise.textContent = st.solar.sunrise || "--:--";
+        if (set) set.textContent = st.solar.sunset || "--:--";
+      }
+      
+      if (!ul) return;
+      if (alarms.length === 0) {
+        ul.innerHTML = `<li class="empty">No alarms yet. Use “+ New” to add one.</li>`;
+        return;
+      }
+      
+      ul.innerHTML = alarms.map(a => {
+        const sched = calcAlarmDisplay(a, st.solar);
+        const isEnabled = a.enabled !== false;
+        const daysLabel = formatRepeatDays(a.days);
+
+        return `
+          <li class="alarm-row ${isEnabled ? '' : 'disabled'}">
+            <div class="alarm-info">
+              <div class="alarm-main-line">
+                <span class="alarm-time-badge">${esc(sched.time)}</span>
+                <span class="alarm-tag-text">${esc(a.tag || 'Alarm')}</span>
+              </div>
+              <div class="alarm-meta-line">
+                <span>${esc(sched.type)}</span><span>·</span><span>${esc(daysLabel)}</span><span>·</span><span>${esc(a.sound || 'homecoming.mp3')}</span>
+              </div>
+            </div>
+            <div class="alarm-actions">
+              <button class="btn sm ghost" onclick="openEditAlarmModal('${a.id}')">Edit</button>
+              <label class="toggle-switch" title="${isEnabled ? 'Disable alarm' : 'Enable alarm'}">
+                <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleAlarm('${a.id}', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <button class="btn sm ghost danger" title="Delete alarm" onclick="deleteAlarmItem('${a.id}')">✕</button>
+            </div>
+          </li>
+        `;
+      }).join("");
+    }
+
+    function saveSettings(silent = false) {
+      const p = {
+        place: document.getElementById("placeInp").value,
+        lat: +document.getElementById("latInp").value,
+        lon: +document.getElementById("lonInp").value,
+        pauseCap: +document.getElementById("pauseCapInp").value,
+        resumeCap: +document.getElementById("resumeCapInp").value,
+        nightStart: +document.getElementById("nightStartSel").value,
+        nightEnd: +document.getElementById("nightEndSel").value,
+        autoLocation: document.getElementById("autoLocCheck").checked,
+        timeFormat: currentTimeFormat,
+        countdowns: document.getElementById("cdsInp").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => ({
+          date: l.slice(0, 10),
+          label: l.slice(11) || "Countdown"
+        }))
+      };
+      post('/api/settings', p);
+      if (!silent) {
+        document.getElementById("saveMsg").textContent = "Saved!";
+        setTimeout(() => { document.getElementById("saveMsg").textContent = ""; }, 2500);
+      }
+      refreshMirror();
+    }
+
+    function updateClock() {
+      const d = new Date();
+      document.getElementById("clockTime").textContent = String(d.getHours()).padStart(2, '0') + ":" + String(d.getMinutes()).padStart(2, '0');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    setInterval(sync, 4000);
+    sync();
+    loadAvailableSounds();
+
+    setTimeout(refreshMirror, 300);
+
+    /* ---- popups ---- */
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.style.display = "flex";
+      if (id === "settingsModal") refreshLaunchers();
+    }
+    function closeModal(id) { const m = document.getElementById(id); if (m) m.style.display = "none"; }
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") document.querySelectorAll(".modal-backdrop").forEach(m => m.style.display = "none");
+    });
+
+    /* ---- highlight the active scene pill (follows the scene label) ---- */
+    (function () {
+      const lbl = document.getElementById("curSceneLabel");
+      if (!lbl) return;
+      const mark = () => {
+        const cur = (lbl.textContent || "").trim().toLowerCase();
+        document.querySelectorAll("[data-scene]").forEach(b => b.classList.toggle("on", cur.startsWith(b.dataset.scene)));
+      };
+      new MutationObserver(mark).observe(lbl, { childList: true, characterData: true, subtree: true });
+      mark();
+    })();
+
+    /* ---- analog clock-face time picker ----
+       Keeps the hidden <input id="almTime"> / <input id="editAlmTime"> as the source of truth ("HH:mm"),
+       so the existing add/edit alarm code works unchanged. Setting .value from code redraws the dial. */
+    function makeClockPicker(inputId, mountId) {
+      const input = document.getElementById(inputId);
+      const mount = document.getElementById(mountId);
+      if (!input || !mount) return;
+      const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+      const pad = n => String(n).padStart(2, "0");
+      const R = 88, C = 115;
+      let h24 = 7, min = 0, mode = "h", dragging = false;
+
+      mount.innerHTML = `
+        <div class="cp-display">
+          <div class="cp-seg" data-m="h">07</div><div class="cp-colon">:</div><div class="cp-seg" data-m="m">00</div>
+          <div class="cp-ampm"><button type="button" data-ap="AM">AM</button><button type="button" data-ap="PM">PM</button></div>
+        </div>
+        <svg class="cp-dial" viewBox="0 0 230 230">
+          <circle class="cp-face" cx="${C}" cy="${C}" r="112"></circle>
+          <line class="cp-hand" x1="${C}" y1="${C}" x2="${C}" y2="${C - R}"></line>
+          <circle class="cp-pin" cx="${C}" cy="${C}" r="3.5"></circle>
+          <circle class="cp-knob" cx="${C}" cy="${C - R}" r="20"></circle>
+          <circle class="cp-dot" cx="${C}" cy="${C - R}" r="2.5" style="display:none"></circle>
+          <g class="cp-nums"></g>
+        </svg>`;
+      const svg = mount.querySelector(".cp-dial");
+      const hand = mount.querySelector(".cp-hand");
+      const knob = mount.querySelector(".cp-knob");
+      const dot = mount.querySelector(".cp-dot");
+      const nums = mount.querySelector(".cp-nums");
+      const segH = mount.querySelector('[data-m="h"]');
+      const segM = mount.querySelector('[data-m="m"]');
+      const apBtns = mount.querySelectorAll("[data-ap]");
+
+      const pos = (deg, r = R) => [C + r * Math.sin(deg * Math.PI / 180), C - r * Math.cos(deg * Math.PI / 180)];
+      const h12 = () => h24 % 12 || 12;
+
+      function render() {
+        const isH = mode === "h";
+        const deg = isH ? (h24 % 12) * 30 : min * 6;
+        const [x, y] = pos(deg);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y);
+        knob.setAttribute("cx", x); knob.setAttribute("cy", y);
+        dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        dot.style.display = (!isH && min % 5 !== 0) ? "" : "none";
+        let html = "";
+        for (let i = 0; i < 12; i++) {
+          const [nx, ny] = pos(i * 30);
+          const label = isH ? (i === 0 ? 12 : i) : pad(i * 5);
+          const sel = isH ? (h12() === (i === 0 ? 12 : i)) : (min === i * 5);
+          html += `<text class="cp-num${sel ? " sel" : ""}" x="${nx}" y="${ny}">${label}</text>`;
+        }
+        nums.innerHTML = html;
+        segH.textContent = pad(h12()); segM.textContent = pad(min);
+        segH.classList.toggle("on", isH); segM.classList.toggle("on", !isH);
+        apBtns.forEach(b => b.classList.toggle("on", b.dataset.ap === (h24 >= 12 ? "PM" : "AM")));
+      }
+
+      function commit() { nativeValue.set.call(input, pad(h24) + ":" + pad(min)); render(); }
+
+      function fromValue(v) {
+        const m = /^(\d{1,2}):(\d{2})/.exec(v || "");
+        h24 = m ? Math.min(23, +m[1]) : 7; min = m ? Math.min(59, +m[2]) : 0;
+      }
+
+      // external code (openEditAlarmModal etc.) sets input.value -> redraw the dial
+      Object.defineProperty(input, "value", {
+        get() { return nativeValue.get.call(this); },
+        set(v) { nativeValue.set.call(this, v); fromValue(v); mode = "h"; render(); }
+      });
+
+      function angle(e) {
+        const r = svg.getBoundingClientRect();
+        let a = Math.atan2(e.clientX - (r.left + r.width / 2), -(e.clientY - (r.top + r.height / 2))) * 180 / Math.PI;
+        return a < 0 ? a + 360 : a;
+      }
+      function apply(e) {
+        const a = angle(e);
+        if (mode === "h") {
+          const idx = Math.round(a / 30) % 12;
+          h24 = idx + (h24 >= 12 ? 12 : 0);
+        } else {
+          min = Math.round(a / 6) % 60;
+        }
+        commit();
+      }
+      svg.addEventListener("pointerdown", e => { dragging = true; svg.setPointerCapture(e.pointerId); apply(e); });
+      svg.addEventListener("pointermove", e => { if (dragging) apply(e); });
+      const end = () => { if (!dragging) return; dragging = false; if (mode === "h") { mode = "m"; render(); } };
+      svg.addEventListener("pointerup", end);
+      svg.addEventListener("pointercancel", end);
+
+      segH.addEventListener("click", () => { mode = "h"; render(); });
+      segM.addEventListener("click", () => { mode = "m"; render(); });
+      apBtns.forEach(b => b.addEventListener("click", () => {
+        const pm = b.dataset.ap === "PM";
+        if (pm && h24 < 12) h24 += 12; else if (!pm && h24 >= 12) h24 -= 12;
+        commit();
+      }));
+
+      fromValue(nativeValue.get.call(input));
+      render();
+    }
+    makeClockPicker("almTime", "almClock");
+    makeClockPicker("editAlmTime", "editAlmClock");
+  </script>
+</body>
+</html>

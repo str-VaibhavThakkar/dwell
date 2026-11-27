@@ -1,0 +1,112 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Desk Dock</title>
+<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/dock/dock.css">
+</head><body>
+<canvas id="sky"></canvas><canvas id="scene"></canvas><canvas id="fx"></canvas>
+<div id="shade"></div>
+
+<!-- Visual Feedback Toast & Floating Page Indicator -->
+<div id="hwToast" class="hw-toast"></div>
+<div id="pageBadge" class="page-badge">Dashboard [1/6]</div>
+
+<!-- Full-Screen Glowing Alarm Ringing Screen (Takes over entire display when ringing) -->
+<div id="alarmOverlay" class="alarm-overlay hidden" aria-hidden="true">
+  <div class="alarm-halo-glow"></div>
+  <div class="alarm-content">
+    <div class="alarm-status-pill">
+      <span class="alarm-pulse-dot"></span>
+      <span class="alarm-status-text">ALARM RINGING</span>
+    </div>
+    <div id="alarmTagDisplay" class="alarm-tag-display">MORNING ROUTINE</div>
+    <div id="alarmTriggerInfo" class="alarm-trigger-info">Dynamic Sunrise · 06:38 AM</div>
+    <div class="alarm-sound-box">
+      <span class="alarm-sound-icon">♪</span>
+      <span id="alarmSoundDisplay">homecoming.mp3</span>
+    </div>
+    <div class="alarm-dismiss-box">
+      <span class="alarm-key-badge">POWER</span>
+      <span class="alarm-dismiss-instruction">PRESS POWER BUTTON TO STOP</span>
+    </div>
+  </div>
+</div>
+
+<div id="ui">
+  <!-- PAGE 1: Clock & Weather Dashboard -->
+  <div id="page-clock" class="dock-page active">
+    <header><span id="place">—</span><span id="status"></span></header>
+    <section id="clock">
+      <div id="date"></div>
+      <div id="time"><span id="hh">--</span><span class="sep">:</span><span id="mm">--</span><span id="ampm" class="ampm"></span></div>
+    </section>
+    <section id="panel">
+      <div id="wxNow">
+        <span id="temp"></span>
+        <div><div id="condBig"></div><div id="hilo"></div></div>
+      </div>
+      <div id="slot"></div>
+    </section>
+    <footer><div id="ticker"></div><div id="dots"></div></footer>
+  </div>
+
+  <!-- PAGE 2: Alarms & Schedule -->
+  <div id="page-alarms" class="dock-page">
+    <header><span class="mono">Alarms & Schedule</span><span id="alarmsSummary" class="preset-tag">0 active</span></header>
+    <section class="alarms-center">
+      <ul id="fullAlarmList" class="alarms-grid-list"></ul>
+    </section>
+    <footer class="alarms-footer">
+      <span class="mono hint">Vol Down: Single=Toggle Alarm · Double=Select Next · Hold=Test Ring</span>
+    </footer>
+  </div>
+
+  <!-- PAGE 3: Focus & Pomodoro Timer -->
+  <div id="page-focus" class="dock-page">
+    <header><span class="mono">Focus Timer</span><span id="focusPresetLabel" class="preset-tag">25m Preset</span></header>
+    <section class="focus-center">
+      <div id="focusDigits" class="focus-digits">25:00</div>
+      <div id="focusState" class="focus-state">Paused · Double-press Vol Down to Start</div>
+    </section>
+    <footer class="focus-footer">
+      <span class="mono hint">Vol Down: Single=Duration · Double=Start/Pause · Hold=Reset</span>
+    </footer>
+  </div>
+
+  <!-- PAGE 4: Study Tasks Checklist -->
+  <div id="page-tasks" class="dock-page">
+    <header><span class="mono">Study Tasks</span><span id="tasksSummary" class="preset-tag">0 open</span></header>
+    <section class="tasks-center">
+      <ul id="fullTaskList" class="tasks-checklist"></ul>
+    </section>
+    <footer class="tasks-footer">
+      <span class="mono hint">Vol Down: Single=Complete Top · Double=Select Next · Hold=Clear Done</span>
+    </footer>
+  </div>
+
+  <!-- PAGE 5: System & Hardware Telemetry -->
+  <div id="page-stats" class="dock-page">
+    <header><span class="mono">Telemetry & Power</span><span id="sysDeviceLabel" class="preset-tag">Redmi Y3 · onc</span></header>
+    <section class="stats-center">
+      <div class="stats-grid">
+        <div class="stats-card"><div class="lbl">Battery</div><div id="statBat" class="val">--%</div><div id="statGuard" class="sub">50-60% Limit</div></div>
+        <div class="stats-card"><div class="lbl">Temperature</div><div id="statTemp" class="val">-- °C</div><div id="statCharging" class="sub">Battery Safe</div></div>
+        <div class="stats-card"><div class="lbl">PC Load</div><div id="statCpu" class="val">--% CPU</div><div id="statRam" class="sub">--% RAM</div></div>
+        <div class="stats-card"><div class="lbl">Charge Guard</div><div id="statGuardMode" class="val">50-60% Active</div><div class="sub">Single-tap to toggle</div></div>
+      </div>
+    </section>
+    <footer class="stats-footer">
+      <span class="mono hint">Vol Down: Single=Toggle Guard · Double=Refresh · Hold=Sleep Screen</span>
+    </footer>
+  </div>
+
+  <!-- PAGE 6: Mirror Mode -->
+  <div id="page-mirror" class="dock-page">
+    <video id="mirrorVideo" autoplay playsinline muted></video>
+  </div>
+</div>
+
+<script src="/lib/suncalc.js"></script>
+<script src="/dock/sky.js"></script>
+<script src="/dock/scene.js"></script>
+<script src="/dock/dock.js"></script>
+</body></html>

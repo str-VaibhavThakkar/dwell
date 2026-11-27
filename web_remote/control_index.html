@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redmi Y3</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #0A0D12;
+      --card: #10141C;
+      --border: #1B222C;
+      --border-subtle: #141922;
+      --fg: #E6E2DD;
+      --muted: #828B98;
+      --pastel-sage: #9AB6A2;
+      --pastel-sand: #CBB79F;
+      --pastel-slate: #A2B4C5;
+      --pastel-rose: #C89E9E;
+      --pastel-lavender: #B8B2CB;
+      --btn-bg: #141922;
+      --btn-border: #242D3B;
+      --btn-shadow: #07090D;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .device-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+    }
+    .device-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #141922;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--pastel-sage);
+      font-family: ui-monospace, monospace;
+      font-weight: 500;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: ui-monospace, monospace;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1650px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .controls-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .card-head h2 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .card-status {
+      font-size: 0.75rem;
+      color: var(--pastel-slate);
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Tactile Mechanical 3D Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--fg);
+      box-shadow: 0 2px 0 var(--btn-shadow);
+      transition: background 0.1s ease, transform 0.08s ease, box-shadow 0.08s ease;
+      user-select: none;
+    }
+    .btn:hover {
+      background: #1B222E;
+      border-color: #313C4D;
+    }
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 0 transparent;
+      background: #11151F;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 2px 0 var(--btn-shadow);
+    }
+
+    .btn.accent-sand {
+      background: #1E1A14;
+      border-color: #383024;
+      color: var(--pastel-sand);
+    }
+    .btn.accent-sand:hover { background: #282219; }
+    .btn.accent-sage {
+      background: #131E17;
+      border-color: #24362A;
+      color: var(--pastel-sage);
+    }
+    .btn.accent-sage:hover { background: #1A2A20; }
+    .btn.accent-rose {
+      background: #201414;
+      border-color: #3A2424;
+      color: var(--pastel-rose);
+    }
+    .btn.accent-rose:hover { background: #2C1B1B; }
+    .btn.accent-slate {
+      background: #141A22;
+      border-color: #24303F;
+      color: var(--pastel-slate);
+    }
+    .btn.accent-slate:hover { background: #1B232E; }
+
+    .btn-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .status-badge.awake {
+      background: #122016;
+      border-color: #24362A;
+      color: var(--pastel-sage);
+    }
+    .status-badge.asleep {
+      background: #141A22;
+      border-color: #24303F;
+      color: var(--pastel-slate);
+    }
+    .status-badge.waking {
+      background: #201A14;
+      border-color: #383024;
+      color: var(--pastel-sand);
+    }
+
+    /* Telemetry row */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .metric-box {
+      background: #080A0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    .metric-box .label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .metric-box .val {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-top: 2px;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Inputs & Selects */
+    input, select, textarea {
+      background: #080A0E;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--fg);
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+      margin: 4px 0;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--pastel-sand);
+    }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Tasks */
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: #080A0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-size: 0.82rem;
+    }
+    .task-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      cursor: pointer;
+      color: var(--fg);
+    }
+    .task-item.done span {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    /* Alarms List */
+    .alarms-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .alarm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #080A0E;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      transition: border-color 0.2s, opacity 0.2s;
+    }
+    .alarm-row.disabled {
+      opacity: 0.5;
+      background: #05070A;
+    }
+    .alarm-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .alarm-main-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .alarm-time-badge {
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--pastel-sand);
+    }
+    .alarm-tag-text {
+      font-weight: 600;
+      color: var(--fg);
+      font-size: 0.85rem;
+    }
+    .alarm-meta-line {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: ui-monospace, monospace;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .alarm-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    /* Architectural Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #12161D;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--muted);
+      border-radius: 2px;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #14281E;
+      border-color: var(--pastel-sage);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(18px);
+      background-color: var(--pastel-sage);
+    }
+
+    /* Live Phone Display Mirror (True Live Iframe + Bezel) */
+    .preview-col {
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 540px;
+    }
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .preview-head h2 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .preview-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-canvas-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #05070A;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+    }
+
+    /* Phone Bezel Frame (Dynamic Landscape / Portrait Ratio) */
+    .phone-bezel {
+      background: #000000;
+      border: 3px solid #1E2530;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.25s ease, height 0.25s ease, aspect-ratio 0.25s ease;
+    }
+    .phone-bezel.landscape {
+      width: 100%;
+      max-width: 680px;
+      aspect-ratio: 19 / 9;
+    }
+    .phone-bezel.portrait {
+      width: auto;
+      height: 540px;
+      aspect-ratio: 9 / 19;
+    }
+
+    .phone-screen-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #000000;
+    }
+
+    .snapshot-overlay {
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      background: rgba(10, 13, 18, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: ui-monospace, monospace;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gpu-zero-tag {
+      color: var(--pastel-sage);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="device-title">Redmi Y3</div>
+      <div class="device-badge" id="hostBadge">onc · 192.168.29.25:8000</div>
+    </div>
+    <div class="header-right">
+      <span id="gpuStatus" style="color:var(--pastel-sage)">Live Stream Active</span>
+      <span id="clockTime">--:--</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls-col">
+      <!-- Screen & Hardware Power -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Screen & Power</h2>
+          <span class="status-badge awake" id="scrBadge">Awake</span>
+        </div>
+        <div class="btn-grid">
+          <button class="btn accent-sand" id="btnWake" onclick="wakeDevice()">Wake Screen</button>
+          <button class="btn accent-slate" id="btnSleep" onclick="sleepDevice()">Sleep</button>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric-box">
+            <div class="label">Battery</div>
+            <div class="val" id="mBat">--%</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Temperature</div>
+            <div class="val" id="mTemp">-- °C</div>
+          </div>
+          <div class="metric-box">
+            <div class="label">Charge Guard</div>
+            <div class="val" id="mGuard" style="color:var(--pastel-sage)">50-60% Limit</div>
+          </div>
+        </div>
+
+        <!-- Display Orientation & Layout Controls -->
+        <div style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border-subtle);">
+          <label style="margin-bottom:6px; font-weight:600; color:var(--fg); font-size:0.78rem;">Display Orientation & Layout</label>
+          <div class="btn-grid">
+            <button class="btn accent-sand" id="btnLand" onclick="setDeviceOrientation('landscape')">Landscape (Dock)</button>
+            <button class="btn" id="btnPort" onclick="setDeviceOrientation('portrait')">Portrait</button>
+            <button class="btn accent-slate" onclick="toggleDeviceOrientation()">Switch Layout</button>
+          </div>
+          <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:6px; margin:0; font-size:0.78rem;">
+              <input type="checkbox" id="autoRot" style="width:auto; margin:0;" onchange="toggleAutoRotate(this.checked)"> Auto-Rotate (Sensor-Driven)
+            </label>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:10px;">
+          <div>
+            <label>Sleep timeout (LCD Duty Cycle)</label>
+            <select id="timeoutSel" onchange="post('/api/screen/timeout', {timeout_seconds: +this.value})">
+              <option value="60">1 min (Recommended)</option>
+              <option value="120">2 min</option>
+              <option value="300">5 min</option>
+              <option value="1800">30 min (Study mode)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:flex-end; padding-bottom:6px;">
+            <span style="font-size:0.75rem; color:var(--muted)">Timeout mitigates retention</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pomodoro & Focus -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Pomodoro & Focus</h2>
+          <span class="card-status" id="tmState" style="color:var(--pastel-sand)">Ready</span>
+        </div>
+        <div class="btn-grid">
+          <button class="btn accent-sand" onclick="timer(25, 'Focus')">Focus 25</button>
+          <button class="btn accent-slate" onclick="timer(50, 'Deep Work')">Deep 50</button>
+          <button class="btn accent-sage" onclick="timer(5, 'Break')">Break 5</button>
+          <button class="btn accent-rose" onclick="post('/api/timer', {action:'stop'})">Stop</button>
+        </div>
+      </section>
+
+      <!-- Scene Selection & Hardware Buttons -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Scene Selection</h2>
+          <span class="card-status" id="curSceneLabel">Desk Window</span>
+        </div>
+        <div class="btn-grid">
+          <button class="btn accent-sand" onclick="setScene('desk')">Desk Window</button>
+          <button class="btn accent-slate" onclick="setScene('mountains')">Mountains</button>
+          <button class="btn accent-rose" onclick="setScene('sakura')">Sakura</button>
+          <button class="btn accent-sage" onclick="setScene('sky')">Sky Only</button>
+        </div>
+        <div style="margin-top:10px; font-size:0.75rem; color:var(--muted); border-top:1px solid var(--border-subtle); padding-top:8px; line-height: 1.4;">
+          <b style="color:var(--fg)">Hardware Volume Rocker:</b> Audio streams are locked to maximum (Smart Speaker mode). Physical volume buttons are designated for future page/tab actions.
+        </div>
+      </section>
+
+      <!-- Clock Format (12-Hour vs 24-Hour) -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Clock Format</h2>
+          <span class="card-status" id="curTimeFormatLabel">12-Hour (Default)</span>
+        </div>
+        <div class="btn-grid" style="grid-template-columns:1fr 1fr;">
+          <button class="btn accent-sand" id="btnFmt12" onclick="setTimeFormat('12h')">12-Hour (Default)</button>
+          <button class="btn" id="btnFmt24" onclick="setTimeFormat('24h')">24-Hour</button>
+        </div>
+      </section>
+
+      <!-- Study Tasks -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Study Tasks</h2>
+          <span class="card-status" id="taskCount">0 tasks</span>
+        </div>
+        <ul class="task-list" id="tasksUl"></ul>
+        <div style="display:flex; gap:6px;">
+          <input id="newTask" placeholder="Add study task (press Enter)..." onkeydown="if(event.key==='Enter')addTask()">
+          <button class="btn" style="padding:8px 12px;" onclick="addTask()">Add</button>
+        </div>
+      </section>
+
+      <!-- Alarms & Dynamic Schedule -->
+      <section class="section-card" id="alarmsCard">
+        <div class="card-head">
+          <h2>Alarms & Dynamic Schedule</h2>
+          <span class="card-status" id="alarmsHeaderCount">0 alarms</span>
+        </div>
+
+        <!-- Active Ringing Alert Box -->
+        <div id="ringingBanner" style="display:none; background:#1A0F12; border:1.5px solid var(--pastel-rose); border-radius:6px; padding:12px 14px; margin-bottom:14px; box-shadow:0 2px 0 var(--pastel-rose);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="color:var(--pastel-rose); font-family:ui-monospace, monospace; font-size:0.75rem; font-weight:700; letter-spacing:0.1em;">● ALARM RINGING NOW</div>
+              <div id="ringingTag" style="font-size:1.1rem; font-weight:700; color:#fff; margin-top:2px;">WAKE UP</div>
+              <div id="ringingMeta" style="font-size:0.75rem; color:var(--muted);">homecoming.mp3</div>
+            </div>
+            <button class="btn" style="background:var(--pastel-rose); color:#000; font-weight:700; padding:8px 16px; border:none;" onclick="dismissAlarmNow()">STOP ALARM</button>
+          </div>
+        </div>
+
+        <!-- Solar times summary -->
+        <div id="solarInfoBar" style="background:#080A0E; border:1px solid var(--border-subtle); border-radius:6px; padding:8px 12px; margin-bottom:12px; font-size:0.75rem; color:var(--pastel-sand); display:flex; justify-content:space-between;">
+          <span>☀ Sunrise today: <b id="solarSunriseText">--:--</b></span>
+          <span>🌙 Sunset today: <b id="solarSunsetText">--:--</b></span>
+        </div>
+
+        <ul class="alarms-list" id="alarmsUl"></ul>
+
+        <!-- Add Alarm Form -->
+        <div style="background:#0D1117; border:1px solid var(--border); border-radius:6px; padding:12px; margin-top:12px;">
+          <div style="font-size:0.78rem; font-weight:600; color:var(--fg); margin-bottom:8px;">Add New Alarm</div>
+          <div class="grid-2" style="margin-bottom:8px;">
+            <div>
+              <label>Tag / Purpose</label>
+              <input id="almTag" placeholder="e.g. Morning Wake Up, Study">
+            </div>
+            <div>
+              <label>Type</label>
+              <select id="almType" onchange="onAlarmTypeChange()" style="width:100%; background:#10141C; color:var(--fg); border:1px solid var(--border); border-radius:4px; padding:8px 10px; font-size:0.82rem;">
+                <option value="fixed">Fixed Time</option>
+                <option value="sunrise">Dynamic Sunrise</option>
+                <option value="sunset">Dynamic Sunset</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-bottom:8px;">
+            <div id="almTimeContainer">
+              <label>Time (HH:mm)</label>
+              <input id="almTime" type="time" value="07:00">
+            </div>
+            <div id="almOffsetContainer" style="display:none;">
+              <label>Offset (+/- minutes from sun)</label>
+              <input id="almOffset" type="number" value="0" placeholder="e.g. 0 or -15">
+            </div>
+            <div>
+              <label>Ringtone Sound</label>
+              <select id="almSound" style="width:100%; background:#10141C; color:var(--fg); border:1px solid var(--border); border-radius:4px; padding:8px 10px; font-size:0.82rem;">
+                <option value="homecoming.mp3">homecoming.mp3 (Default)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn accent-sand" style="flex:2; padding:8px;" onclick="addAlarmNow()">Create Alarm</button>
+            <button class="btn" style="flex:1; padding:8px; font-size:0.75rem;" onclick="testAlarmRingNow()">Test Alarm</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Location & Settings (Open-Meteo & Dynamic Geolocation) -->
+      <section class="section-card">
+        <div class="card-head">
+          <h2>Location & Settings</h2>
+          <span class="card-status" id="saveMsg"></span>
+        </div>
+        <div style="background:#080A0E; border:1px solid var(--border-subtle); border-radius:6px; padding:10px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:8px; margin:0; font-weight:600; color:var(--fg); font-size:0.82rem;">
+              <input type="checkbox" id="autoLocCheck" style="width:auto; margin:0;" onchange="toggleAutoLocation(this.checked)"> Dynamic Location (Auto-sync IP/GPS)
+            </label>
+            <button class="btn accent-sand" id="btnAutoLoc" style="padding:4px 10px; font-size:0.75rem;" onclick="autoDetectLocationNow()">Auto-Detect Now</button>
+          </div>
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:6px; line-height:1.35;">
+            Automatically detects your city and coordinates when moving to new networks or cities, keeping weather and solar times dynamic worldwide.
+          </div>
+        </div>
+        <div class="grid-2">
+          <div><label>City Label</label><input id="placeInp"></div>
+          <div><label>Search City (Open-Meteo)</label><div style="display:flex; gap:4px;"><input id="searchCityInp" placeholder="e.g. Kolkata"><button class="btn" style="padding:6px 10px;" onclick="lookupCity()">Find</button></div></div>
+          <div><label>Latitude</label><input id="latInp" type="number" step="0.0001"></div>
+          <div><label>Longitude</label><input id="lonInp" type="number" step="0.0001"></div>
+          <div><label>Pause charge at %</label><input id="pauseCapInp" type="number"></div>
+          <div><label>Resume charge at %</label><input id="resumeCapInp" type="number"></div>
+          <div><label>Night quiet start (hour)</label><input id="nightStartInp" type="number"></div>
+          <div><label>Night quiet end (hour)</label><input id="nightEndInp" type="number"></div>
+        </div>
+        <label>Countdowns (one per line: YYYY-MM-DD Label)</label>
+        <textarea id="cdsInp" rows="2"></textarea>
+        <button class="btn accent-sand" style="width:100%; margin-top:8px;" onclick="saveSettings()">Save Settings</button>
+      </section>
+    </div>
+
+    <!-- Right Column: Live Phone Display Mirror (Streamed) -->
+    <div class="preview-col">
+      <div class="preview-head">
+        <h2>Live Phone Display (Mirrored)</h2>
+        <div class="preview-controls">
+          <button class="btn" id="btnRefreshMirror" style="padding:5px 12px; font-size:0.75rem;" onclick="refreshMirror()">Refresh Stream</button>
+        </div>
+      </div>
+      <div class="preview-canvas-container">
+        <div class="phone-bezel landscape" id="phoneBezel">
+          <iframe id="dockFrame" class="phone-screen-frame" src="/dock/"></iframe>
+          <div class="snapshot-overlay">
+            <span class="gpu-zero-tag">LIVE</span>
+            <span id="snapTime">Connected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const q = new URLSearchParams(location.search);
+    if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
+    const TOKEN = localStorage.getItem("dockToken") || "";
+
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const escapeHtml = esc;
+    let currentAlarms = [];
+
+    async function api(path, body) {
+      try {
+        const res = await fetch(path, {
+          method: body === undefined ? "GET" : "POST",
+          headers: { "X-Token": TOKEN, "Content-Type": "application/json" },
+          body: body === undefined ? undefined : JSON.stringify(body)
+        });
+        if (!res.ok) {
+          if (res.status === 401 && !TOKEN) {
+            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", "36769d33");
+            if (entered) {
+              localStorage.setItem("dockToken", entered);
+              location.reload();
+            }
+          }
+          return null;
+        }
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function post(p, b = {}) {
+      const res = await api(p, b);
+      sync();
+      return res;
+    }
+
+    const timer = (m, l) => post('/api/timer', { action: 'start', minutes: m, label: l });
+    function setScene(s) {
+      post('/api/settings', { scene: s });
+      document.getElementById("curSceneLabel").textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      setTimeout(refreshMirror, 300);
+    }
+
+    let currentTimeFormat = '12h';
+
+    async function setTimeFormat(fmt) {
+      currentTimeFormat = fmt;
+      updateTimeFormatUI(fmt);
+      await post('/api/settings', { timeFormat: fmt });
+      setTimeout(refreshMirror, 300);
+    }
+
+    function updateTimeFormatUI(fmt) {
+      currentTimeFormat = fmt;
+      const is12 = fmt !== '24h';
+      const lbl = document.getElementById("curTimeFormatLabel");
+      if (lbl) lbl.textContent = is12 ? "12-Hour (Default)" : "24-Hour";
+      const b12 = document.getElementById("btnFmt12");
+      const b24 = document.getElementById("btnFmt24");
+      if (b12 && b24) {
+        b12.className = is12 ? "btn accent-sand" : "btn";
+        b24.className = is12 ? "btn" : "btn accent-slate";
+      }
+    }
+
+    /* Tactile Wake & Sleep with Optimistic UI */
+    async function wakeDevice() {
+      const badge = document.getElementById("scrBadge");
+      const btn = document.getElementById("btnWake");
+      badge.className = "status-badge waking";
+      badge.textContent = "Waking...";
+      btn.disabled = true;
+      try {
+        await api('/api/screen/wake', {});
+        badge.className = "status-badge awake";
+        badge.textContent = "Awake";
+      } catch (e) {
+        badge.className = "status-badge awake";
+        badge.textContent = "Awake";
+      } finally {
+        btn.disabled = false;
+        setTimeout(refreshMirror, 800);
+      }
+    }
+
+    async function sleepDevice() {
+      const badge = document.getElementById("scrBadge");
+      const btn = document.getElementById("btnSleep");
+      badge.className = "status-badge asleep";
+      badge.textContent = "Sleeping...";
+      btn.disabled = true;
+      try {
+        await api('/api/screen/sleep', {});
+        badge.className = "status-badge asleep";
+        badge.textContent = "Asleep";
+      } catch (e) {
+        badge.className = "status-badge asleep";
+        badge.textContent = "Asleep";
+      } finally {
+        btn.disabled = false;
+        setTimeout(refreshMirror, 600);
+      }
+    }
+
+    /* Orientation & Layout Actuation */
+    async function setDeviceOrientation(mode) {
+      const isLand = mode === "landscape";
+      updateBezelOrientation(isLand ? "landscape" : "portrait");
+      document.getElementById("autoRot").checked = false;
+      await post('/api/screen/rotate', { orientation: mode, auto_rotate: false });
+      setTimeout(refreshMirror, 500);
+    }
+
+    async function toggleDeviceOrientation() {
+      const bezel = document.getElementById("phoneBezel");
+      const isPort = bezel.classList.contains("portrait");
+      await setDeviceOrientation(isPort ? "landscape" : "portrait");
+    }
+
+    async function toggleAutoRotate(enabled) {
+      await post('/api/screen/rotate', { auto_rotate: enabled });
+      refreshMirror();
+    }
+
+    function updateBezelOrientation(mode) {
+      const bezel = document.getElementById("phoneBezel");
+      const btnLand = document.getElementById("btnLand");
+      const btnPort = document.getElementById("btnPort");
+      if (mode === "landscape") {
+        bezel.classList.remove("portrait");
+        bezel.classList.add("landscape");
+        if (btnLand) { btnLand.className = "btn accent-sand"; }
+        if (btnPort) { btnPort.className = "btn"; }
+      } else {
+        bezel.classList.remove("landscape");
+        bezel.classList.add("portrait");
+        if (btnPort) { btnPort.className = "btn accent-sand"; }
+        if (btnLand) { btnLand.className = "btn"; }
+      }
+    }
+
+    /* Live Mirror Refresh */
+    function refreshMirror() {
+      const frame = document.getElementById("dockFrame");
+      if (frame) frame.src = "/dock/?_t=" + Date.now();
+      const timeLbl = document.getElementById("snapTime");
+      if (timeLbl) {
+        const now = new Date();
+        timeLbl.textContent = "Live: " + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0');
+      }
+    }
+
+    let loadedSettings = false;
+    async function sync() {
+      try {
+        const [st, scr] = await Promise.all([api("/api/state"), api("/api/screen/status")]);
+        if (!st) return;
+
+        const badge = document.getElementById("scrBadge");
+        const isAwake = scr && (scr.wakefulness === "Awake" || scr.wakefulness === "interactive");
+        if (isAwake) {
+          badge.className = "status-badge awake";
+          badge.textContent = "Awake";
+        } else {
+          badge.className = "status-badge asleep";
+          badge.textContent = "Asleep";
+        }
+
+        if (scr?.timeout_s) document.getElementById("timeoutSel").value = scr.timeout_s;
+        if (scr?.auto_rotate !== undefined) document.getElementById("autoRot").checked = !!scr.auto_rotate;
+        if (scr?.orientation) updateBezelOrientation(scr.orientation);
+
+        document.getElementById("mBat").textContent = (st.battery?.capacity ?? "--") + "%";
+        document.getElementById("mTemp").textContent = (st.battery?.temp_c ?? "--") + " °C";
+        document.getElementById("mGuard").textContent = st.battery?.guard?.charging_allowed ? "Charging" : "50-60% Limit";
+
+        const tm = st.timer;
+        if (tm?.running && tm.endsAt > Date.now()) {
+          const s = Math.round((tm.endsAt - Date.now()) / 1000);
+          document.getElementById("tmState").textContent = Math.floor(s/60) + ":" + String(s%60).padStart(2, '0') + " (" + (tm.label || "Focus") + ")";
+        } else {
+          document.getElementById("tmState").textContent = "Ready";
+        }
+
+        const tasks = st.tasks || [];
+        const open = tasks.filter(t => !t.done).length;
+        document.getElementById("taskCount").textContent = `${open} to do · ${tasks.length - open} done`;
+
+        document.getElementById("tasksUl").innerHTML = tasks.map(t => `
+          <li class="task-item ${t.done ? 'done' : ''}">
+            <label>
+              <input type="checkbox" style="width:auto; margin:0;" ${t.done ? 'checked' : ''} onchange="post('/api/tasks/${t.id}', {done: this.checked})">
+              <span>${t.text}</span>
+            </label>
+            <button class="btn" style="padding:2px 6px; font-size:0.7rem;" onclick="post('/api/tasks/${t.id}', {delete: true})">✕</button>
+          </li>
+        `).join("");
+
+        renderAlarmsList(st);
+
+        if (st.settings?.timeFormat) {
+          updateTimeFormatUI(st.settings.timeFormat);
+        }
+
+        if (!loadedSettings && st.settings) {
+          loadedSettings = true;
+          const s = st.settings;
+          document.getElementById("placeInp").value = s.place || "Kolkata, WB";
+          document.getElementById("latInp").value = s.lat ?? 22.5643;
+          document.getElementById("lonInp").value = s.lon ?? 88.3693;
+          document.getElementById("pauseCapInp").value = s.pauseCap ?? 60;
+          document.getElementById("resumeCapInp").value = s.resumeCap ?? 50;
+          document.getElementById("nightStartInp").value = s.nightStart ?? 0;
+          document.getElementById("nightEndInp").value = s.nightEnd ?? 6;
+          document.getElementById("autoLocCheck").checked = s.autoLocation !== false;
+          document.getElementById("cdsInp").value = (s.countdowns || []).map(c => `${c.date} ${c.label}`).join("\n");
+          if (s.scene) {
+            document.getElementById("curSceneLabel").textContent = s.scene.charAt(0).toUpperCase() + s.scene.slice(1);
+          }
+        }
+      } catch (err) {}
+    }
+
+    function addTask() {
+      const inp = document.getElementById("newTask");
+      const txt = inp.value.trim();
+      if (!txt) return;
+      post('/api/tasks', { text: txt });
+      inp.value = "";
+    }
+
+    async function lookupCity() {
+      const val = document.getElementById("searchCityInp").value.trim();
+      if (!val) return;
+      try {
+        const r = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(val))).json();
+        const c = r.results?.[0];
+        if (c) {
+          document.getElementById("latInp").value = c.latitude.toFixed(4);
+          document.getElementById("lonInp").value = c.longitude.toFixed(4);
+          document.getElementById("placeInp").value = c.name + ", " + (c.admin1 || c.country);
+          document.getElementById("autoLocCheck").checked = false;
+          document.getElementById("saveMsg").textContent = "Found " + c.name + " · Press Save";
+        }
+      } catch (e) {}
+    }
+
+    /* Dynamic Geolocation Auto-Detection */
+    async function autoDetectLocationNow() {
+      const btn = document.getElementById("btnAutoLoc");
+      const msg = document.getElementById("saveMsg");
+      btn.disabled = true;
+      btn.textContent = "Detecting...";
+      msg.textContent = "Querying location...";
+
+      try {
+        let lat = null, lon = null, place = null;
+        try {
+          const r = await (await fetch("https://get.geojs.io/v1/ip/geo.json")).json();
+          if (r && r.latitude && r.longitude) {
+            lat = parseFloat(r.latitude);
+            lon = parseFloat(r.longitude);
+            place = r.city ? `${r.city}, ${r.region || r.country || ""}`.trim().replace(/,\s*$/, "") : null;
+          }
+        } catch {}
+
+        if (!lat || !lon) {
+          try {
+            const r2 = await (await fetch("https://ipwho.is/")).json();
+            if (r2 && r2.success) {
+              lat = r2.latitude;
+              lon = r2.longitude;
+              place = r2.city ? `${r2.city}, ${r2.region || r2.country || ""}`.trim().replace(/,\s*$/, "") : null;
+            }
+          } catch {}
+        }
+
+        if (lat && lon) {
+          document.getElementById("latInp").value = lat.toFixed(4);
+          document.getElementById("lonInp").value = lon.toFixed(4);
+          if (place) document.getElementById("placeInp").value = place;
+          document.getElementById("autoLocCheck").checked = true;
+
+          saveSettings(true);
+          msg.textContent = `Auto-detected: ${place || lat + ", " + lon} · Saved!`;
+        } else {
+          msg.textContent = "Could not detect location. Search city manually.";
+        }
+      } catch (e) {
+        msg.textContent = "Detection failed. Check connection.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Auto-Detect Now";
+        setTimeout(() => { if (msg.textContent.includes("Saved")) msg.textContent = ""; }, 3000);
+      }
+    }
+
+    function toggleAutoLocation(checked) {
+      post('/api/settings', { autoLocation: checked });
+      if (checked) autoDetectLocationNow();
+    }
+
+    async function loadAvailableSounds() {
+      try {
+        const res = await fetch("/api/alarms/sounds" + authQuery());
+        if (res.ok) {
+          const data = await res.json();
+          const sel = document.getElementById("almSound");
+          if (sel && data.sounds) {
+            sel.innerHTML = data.sounds.map(s => `<option value="${s}">${s}${s === 'homecoming.mp3' ? ' (Default)' : ''}</option>`).join("");
+          }
+        }
+      } catch (e) {}
+    }
+
+    function onAlarmTypeChange() {
+      const type = document.getElementById("almType").value;
+      const timeBox = document.getElementById("almTimeContainer");
+      const offsetBox = document.getElementById("almOffsetContainer");
+      if (type === "fixed") {
+        timeBox.style.display = "";
+        offsetBox.style.display = "none";
+      } else {
+        timeBox.style.display = "none";
+        offsetBox.style.display = "";
+      }
+    }
+
+    async function addAlarmNow() {
+      const tag = document.getElementById("almTag").value.trim() || "Alarm";
+      const type = document.getElementById("almType").value;
+      const time = document.getElementById("almTime").value || "07:00";
+      const offsetMinutes = parseInt(document.getElementById("almOffset").value) || 0;
+      const sound = document.getElementById("almSound").value || "homecoming.mp3";
+      
+      const payload = {
+        tag,
+        type,
+        sound,
+        enabled: true,
+        days: []
+      };
+      if (type === "fixed") payload.time = time;
+      else payload.offsetMinutes = offsetMinutes;
+      
+      await post("/api/alarms", payload);
+      document.getElementById("almTag").value = "";
+      sync();
+    }
+
+    async function dismissAlarmNow() {
+      await post("/api/alarms/dismiss", {});
+      sync();
+    }
+
+    async function testAlarmRingNow() {
+      const tag = document.getElementById("almTag").value.trim() || "SUNRISE AWAKENING";
+      const sound = document.getElementById("almSound").value || "homecoming.mp3";
+      await post("/api/alarms/test", { tag, sound });
+      sync();
+    }
+
+    async function toggleAlarm(id, enabled) {
+      await post('/api/alarms/' + id, { enabled: enabled });
+      sync();
+    }
+
+    async function deleteAlarmItem(id) {
+      if (!confirm("Delete this alarm?")) return;
+      await post('/api/alarms/' + id, { delete: true });
+      sync();
+    }
+
+    async function testSingleAlarm(id) {
+      const a = (currentAlarms || []).find(x => x.id === id);
+      if (!a) return;
+      await post('/api/alarms/test', { tag: a.tag || "TEST ALARM", sound: a.sound || "homecoming.mp3" });
+      sync();
+    }
+
+    function calcAlarmDisplay(a, solar) {
+      if (a.type === "fixed") {
+        const t = a.time || "07:00";
+        return {
+          time: t,
+          type: "Fixed Time"
+        };
+      }
+      const isRise = a.type === "sunrise";
+      const icon = isRise ? "☀" : "🌙";
+      const name = isRise ? "Sunrise" : "Sunset";
+      const baseTimeStr = isRise ? solar?.sunrise : solar?.sunset;
+      if (!baseTimeStr || !baseTimeStr.includes(":")) {
+        return {
+          time: `${icon} ${name}`,
+          type: a.offsetMinutes ? `${name} (${a.offsetMinutes > 0 ? '+' : ''}${a.offsetMinutes}m)` : `${name} (Exact)`
+        };
+      }
+      const [hStr, mStr] = baseTimeStr.split(":");
+      let totalMin = parseInt(hStr, 10) * 60 + parseInt(mStr, 10) + (a.offsetMinutes || 0);
+      totalMin = (totalMin % 1440 + 1440) % 1440;
+      const th = Math.floor(totalMin / 60);
+      const tm = totalMin % 60;
+      const hhmm = String(th).padStart(2, '0') + ":" + String(tm).padStart(2, '0');
+      const offsetNote = a.offsetMinutes ? ` (${a.offsetMinutes > 0 ? '+' : ''}${a.offsetMinutes}m)` : " (Exact)";
+      return {
+        time: `${icon} ${hhmm}`,
+        type: `${name}${offsetNote}`
+      };
+    }
+
+    function renderAlarmsList(st) {
+      const alarms = st.alarms || [];
+      currentAlarms = alarms;
+      const ringing = st.isAlarmRinging;
+      const rAlm = st.ringingAlarm;
+      const countEl = document.getElementById("alarmsHeaderCount");
+      const ul = document.getElementById("alarmsUl");
+      const banner = document.getElementById("ringingBanner");
+      const rTag = document.getElementById("ringingTag");
+      const rMeta = document.getElementById("ringingMeta");
+      
+      if (countEl) {
+        const act = alarms.filter(a => a.enabled !== false).length;
+        countEl.textContent = `${act} active · ${alarms.length} total`;
+      }
+      
+      if (banner) {
+        if (ringing && rAlm) {
+          banner.style.display = "block";
+          if (rTag) rTag.textContent = rAlm.tag || "ALARM RINGING";
+          if (rMeta) rMeta.textContent = `Playing ${rAlm.sound || 'homecoming.mp3'}`;
+        } else {
+          banner.style.display = "none";
+        }
+      }
+      
+      if (st.solar) {
+        const rise = document.getElementById("solarSunriseText");
+        const set = document.getElementById("solarSunsetText");
+        if (rise) rise.textContent = st.solar.sunrise || "--:--";
+        if (set) set.textContent = st.solar.sunset || "--:--";
+      }
+      
+      if (!ul) return;
+      if (alarms.length === 0) {
+        ul.innerHTML = `<li style="padding:12px; font-size:0.8rem; color:var(--muted); text-align:center; background:#080A0E; border:1px dashed var(--border-subtle); border-radius:6px;">No alarms configured. Add one below.</li>`;
+        return;
+      }
+      
+      ul.innerHTML = alarms.map(a => {
+        const sched = calcAlarmDisplay(a, st.solar);
+        const isEnabled = a.enabled !== false;
+        
+        return `
+          <li class="alarm-row ${isEnabled ? '' : 'disabled'}">
+            <div class="alarm-info">
+              <div class="alarm-main-line">
+                <span class="alarm-time-badge">${esc(sched.time)}</span>
+                <span class="alarm-tag-text">${esc(a.tag || 'Alarm')}</span>
+              </div>
+              <div class="alarm-meta-line">
+                <span>${esc(sched.type)}</span>
+                <span>·</span>
+                <span>${esc(a.sound || 'homecoming.mp3')}</span>
+              </div>
+            </div>
+            <div class="alarm-actions">
+              <button class="btn" style="padding:3px 8px; font-size:0.72rem;" title="Test Sound" onclick="testSingleAlarm('${a.id}')">Test</button>
+              <label class="toggle-switch" title="${isEnabled ? 'Disable alarm' : 'Enable alarm'}">
+                <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleAlarm('${a.id}', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <button class="btn" style="padding:3px 8px; font-size:0.72rem; color:var(--pastel-rose);" title="Delete alarm" onclick="deleteAlarmItem('${a.id}')">✕</button>
+            </div>
+          </li>
+        `;
+      }).join("");
+    }
+
+    function saveSettings(silent = false) {
+      const p = {
+        place: document.getElementById("placeInp").value,
+        lat: +document.getElementById("latInp").value,
+        lon: +document.getElementById("lonInp").value,
+        pauseCap: +document.getElementById("pauseCapInp").value,
+        resumeCap: +document.getElementById("resumeCapInp").value,
+        nightStart: +document.getElementById("nightStartInp").value,
+        nightEnd: +document.getElementById("nightEndInp").value,
+        autoLocation: document.getElementById("autoLocCheck").checked,
+        timeFormat: currentTimeFormat,
+        countdowns: document.getElementById("cdsInp").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => ({
+          date: l.slice(0, 10),
+          label: l.slice(11) || "Countdown"
+        }))
+      };
+      post('/api/settings', p);
+      if (!silent) {
+        document.getElementById("saveMsg").textContent = "Saved!";
+        setTimeout(() => { document.getElementById("saveMsg").textContent = ""; }, 2500);
+      }
+      refreshMirror();
+    }
+
+    function updateClock() {
+      const d = new Date();
+      document.getElementById("clockTime").textContent = String(d.getHours()).padStart(2, '0') + ":" + String(d.getMinutes()).padStart(2, '0');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    setInterval(sync, 4000);
+    sync();
+    loadAvailableSounds();
+
+    setTimeout(refreshMirror, 300);
+  </script>
+</body>
+</html>

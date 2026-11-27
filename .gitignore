@@ -1,0 +1,47 @@
+# Local development and OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Private local SDK configuration
+local.properties
+android/local.properties
+
+# Python cache
+**/__pycache__/
+**/*.py[cod]
+*$py.class
+
+# Android build outputs & caches
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+*.hprof
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Stray binaries & APKs
+*.apk
+*.idsig
+android/*.apk
+bin/
+archive/builds/
+tools/*.jar
+*-patched.apk
+
+# Duplicate audio at root
+homecoming.mp3
+
+# Temporary scratchpad
+scratch/
+build_all_collages.py
+
+# Internal planning & AI audit documents
+AUDIT_REPORT_PROMPTS_1_TO_6.md
+docs/blueprint_v2.md
+docs/PROJECT_OUTLINE.md
