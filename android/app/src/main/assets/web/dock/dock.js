@@ -500,6 +500,63 @@ function formatRepeatDays(days) {
   return sorted.map(d => DAY_LABELS[d] || d).join(", ");
 }
 
+function getTimeUntilAlarm(alm, solar) {
+  if (alm.enabled === false) return '';
+  let targetHour = 7, targetMin = 0;
+  if (alm.type === 'fixed') {
+    const parts = (alm.time || '07:00').split(':');
+    targetHour = parseInt(parts[0], 10);
+    targetMin = parseInt(parts[1], 10);
+  } else {
+    const isRise = alm.type === 'sunrise';
+    const baseStr = isRise ? solar?.sunrise : solar?.sunset;
+    if (!baseStr || !baseStr.includes(':')) return '';
+    const parts = baseStr.split(':');
+    let total = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10) + (alm.offsetMinutes || 0);
+    total = (total % 1440 + 1440) % 1440;
+    targetHour = Math.floor(total / 60);
+    targetMin = total % 60;
+  }
+
+  const now = new Date();
+  const days = Array.isArray(alm.days) && alm.days.length > 0 ? alm.days.map(Number) : [];
+
+  let minDiffMs = Infinity;
+  if (days.length === 0) {
+    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), targetHour, targetMin, 0, 0);
+    if (target.getTime() <= now.getTime()) {
+      target.setDate(target.getDate() + 1);
+    }
+    minDiffMs = target.getTime() - now.getTime();
+  } else {
+    for (let d = 0; d <= 7; d++) {
+      const checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, targetHour, targetMin, 0, 0);
+      const checkDay = checkDate.getDay() === 0 ? 7 : checkDate.getDay();
+      if (days.includes(checkDay)) {
+        const diff = checkDate.getTime() - now.getTime();
+        if (diff > 0) {
+          minDiffMs = diff;
+          break;
+        }
+      }
+    }
+  }
+
+  if (minDiffMs === Infinity || minDiffMs <= 0) return '';
+  const totalMin = Math.round(minDiffMs / 60000);
+  const daysDiff = Math.floor(totalMin / 1440);
+  const hoursDiff = Math.floor((totalMin % 1440) / 60);
+  const minutesDiff = totalMin % 60;
+
+  if (daysDiff > 0) {
+    return hoursDiff > 0 ? ('in ' + daysDiff + 'd ' + hoursDiff + 'h') : ('in ' + daysDiff + 'd');
+  } else if (hoursDiff > 0) {
+    return minutesDiff > 0 ? ('in ' + hoursDiff + 'h ' + minutesDiff + 'm') : ('in ' + hoursDiff + 'h');
+  } else {
+    return minutesDiff <= 1 ? 'in < 1m' : ('in ' + minutesDiff + 'm');
+  }
+}
+
 function renderAlarmsPage() {
   const ul = $("fullAlarmList");
   const summary = $("alarmsSummary");
@@ -524,6 +581,7 @@ function renderAlarmsPage() {
     const isAct = alm.enabled !== false;
     const timeDisplay = getAlarmTargetTime(alm, solar, is12h);
     const repeatLabel = formatRepeatDays(alm.days);
+    const timeUntil = isAct ? getTimeUntilAlarm(alm, solar) : "";
     
     let typeLabel = "Fixed Time";
     if (alm.type === "sunrise") {
@@ -543,6 +601,7 @@ function renderAlarmsPage() {
           <span>${esc(typeLabel)}</span>
           <span>·</span>
           <span style="color:var(--pastel-sand); font-weight:600;">${esc(repeatLabel)}</span>
+          ${timeUntil ? `<span>·</span><span class="alarm-countdown" style="color:var(--pastel-sage); font-weight:600;">🔔 Rings ${esc(timeUntil)}</span>` : ''}
           <span>·</span>
           <span>${esc(alm.sound || 'homecoming.mp3')}</span>
         </div>
