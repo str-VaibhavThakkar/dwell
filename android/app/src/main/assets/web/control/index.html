@@ -836,8 +836,23 @@ Loading logs...
   <script>
     const q = new URLSearchParams(location.search);
     if (q.get("token")) localStorage.setItem("dockToken", q.get("token"));
-    const TOKEN = localStorage.getItem("dockToken") || "";
+    let TOKEN = localStorage.getItem("dockToken") || "";
     const authQuery = () => TOKEN ? "?token=" + encodeURIComponent(TOKEN) : "";
+
+    async function resolveToken() {
+      try {
+        const res = await fetch("/api/discover");
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.token) {
+            TOKEN = d.token;
+            localStorage.setItem("dockToken", d.token);
+            return d.token;
+          }
+        }
+      } catch (e) {}
+      return TOKEN;
+    }
 
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const escapeHtml = esc;
@@ -1012,7 +1027,7 @@ Loading logs...
       }
     });
 
-    async function api(path, body) {
+    async function api(path, body, retryOnAuth = true) {
       try {
         const url = path.includes("?") 
           ? (TOKEN && !path.includes("token=") ? `${path}&token=${encodeURIComponent(TOKEN)}` : path) 
@@ -1023,11 +1038,17 @@ Loading logs...
           body: body === undefined ? undefined : JSON.stringify(body)
         });
         if (!res.ok) {
-          if (res.status === 401 && !TOKEN) {
-            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", "36769d33");
+          if (res.status === 401 && retryOnAuth) {
+            const oldToken = TOKEN;
+            const discovered = await resolveToken();
+            if (discovered && discovered !== oldToken) {
+              return await api(path, body, false);
+            }
+            const entered = prompt("Enter your Desk Dock access token (printed in app logs):", TOKEN || "");
             if (entered) {
-              localStorage.setItem("dockToken", entered);
-              location.reload();
+              TOKEN = entered.trim();
+              localStorage.setItem("dockToken", TOKEN);
+              return await api(path, body, false);
             }
           }
           return null;
@@ -1306,7 +1327,7 @@ Loading logs...
     function refreshMirror() {
       if (lastMirrorActive) return; // Don't request camera snapshot when mirror is active
       const snapImg = document.getElementById("dockSnapshot");
-      const token = new URLSearchParams(location.search).get("token") || "";
+      const token = TOKEN || new URLSearchParams(location.search).get("token") || "";
       if (snapImg) {
         snapImg.src = "/api/screen/snapshot?token=" + encodeURIComponent(token) + "&_t=" + Date.now();
       }
@@ -1627,6 +1648,63 @@ Loading logs...
       };
     }
 
+    function getTimeUntilAlarm(alm, solar) {
+      if (alm.enabled === false) return '';
+      let targetHour = 7, targetMin = 0;
+      if (alm.type === 'fixed') {
+        const parts = (alm.time || '07:00').split(':');
+        targetHour = parseInt(parts[0], 10);
+        targetMin = parseInt(parts[1], 10);
+      } else {
+        const isRise = alm.type === 'sunrise';
+        const baseStr = isRise ? solar?.sunrise : solar?.sunset;
+        if (!baseStr || !baseStr.includes(':')) return '';
+        const parts = baseStr.split(':');
+        let total = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10) + (alm.offsetMinutes || 0);
+        total = (total % 1440 + 1440) % 1440;
+        targetHour = Math.floor(total / 60);
+        targetMin = total % 60;
+      }
+
+      const now = new Date();
+      const days = Array.isArray(alm.days) && alm.days.length > 0 ? alm.days.map(Number) : [];
+
+      let minDiffMs = Infinity;
+      if (days.length === 0) {
+        const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), targetHour, targetMin, 0, 0);
+        if (target.getTime() <= now.getTime()) {
+          target.setDate(target.getDate() + 1);
+        }
+        minDiffMs = target.getTime() - now.getTime();
+      } else {
+        for (let d = 0; d <= 7; d++) {
+          const checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d, targetHour, targetMin, 0, 0);
+          const checkDay = checkDate.getDay() === 0 ? 7 : checkDate.getDay();
+          if (days.includes(checkDay)) {
+            const diff = checkDate.getTime() - now.getTime();
+            if (diff > 0) {
+              minDiffMs = diff;
+              break;
+            }
+          }
+        }
+      }
+
+      if (minDiffMs === Infinity || minDiffMs <= 0) return '';
+      const totalMin = Math.round(minDiffMs / 60000);
+      const daysDiff = Math.floor(totalMin / 1440);
+      const hoursDiff = Math.floor((totalMin % 1440) / 60);
+      const minutesDiff = totalMin % 60;
+
+      if (daysDiff > 0) {
+        return hoursDiff > 0 ? ('in ' + daysDiff + 'd ' + hoursDiff + 'h') : ('in ' + daysDiff + 'd');
+      } else if (hoursDiff > 0) {
+        return minutesDiff > 0 ? ('in ' + hoursDiff + 'h ' + minutesDiff + 'm') : ('in ' + hoursDiff + 'h');
+      } else {
+        return minutesDiff <= 1 ? 'in < 1m' : ('in ' + minutesDiff + 'm');
+      }
+    }
+
     function renderAlarmsList(st) {
       const alarms = st.alarms || [];
       currentAlarms = alarms;
@@ -1670,6 +1748,7 @@ Loading logs...
         const sched = calcAlarmDisplay(a, st.solar);
         const isEnabled = a.enabled !== false;
         const daysLabel = formatRepeatDays(a.days);
+        const timeUntil = isEnabled ? getTimeUntilAlarm(a, st.solar) : '';
 
         return `
           <li class="alarm-row ${isEnabled ? '' : 'disabled'}">
@@ -1677,6 +1756,7 @@ Loading logs...
               <div class="alarm-main-line">
                 <span class="alarm-time-badge">${esc(sched.time)}</span>
                 <span class="alarm-tag-text">${esc(a.tag || 'Alarm')}</span>
+                ${timeUntil ? `<span class="alarm-countdown-pill" style="font-size:11px; font-family:var(--mono); color:var(--pastel-sage); background:rgba(154,182,162,0.12); padding:2px 7px; border-radius:6px; border:1px solid rgba(154,182,162,0.25);">🔔 Rings ${esc(timeUntil)}</span>` : ''}
               </div>
               <div class="alarm-meta-line">
                 <span>${esc(sched.type)}</span><span>·</span><span>${esc(daysLabel)}</span><span>·</span><span>${esc(a.sound || 'homecoming.mp3')}</span>
@@ -1726,11 +1806,15 @@ Loading logs...
     setInterval(updateClock, 1000);
     updateClock();
 
-    setInterval(sync, 4000);
-    sync();
-    loadAvailableSounds();
-
-    setTimeout(refreshMirror, 300);
+    (async function init() {
+      if (!TOKEN) {
+        await resolveToken();
+      }
+      sync();
+      loadAvailableSounds();
+      setTimeout(refreshMirror, 300);
+      setInterval(sync, 4000);
+    })();
 
     /* ---- popups ---- */
     function openModal(id) {

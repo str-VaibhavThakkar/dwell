@@ -131,10 +131,10 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                 json(JSONObject().put("ok", true).put("alarm", newAlm).put("alarms", store.alarms()))
             }
 
-            uri == "/api/alarms/dismiss" && post -> {
+            (uri == "/api/alarms/dismiss" || uri == "/api/alarms/stop") && post -> {
                 AlarmEngine.dismissAlarm(ctx)
                 MainActivity.instance?.reloadWebAlarms()
-                json(JSONObject().put("ok", true).put("isRinging", false))
+                json(JSONObject().put("ok", true).put("isRinging", false).put("playing", false))
             }
 
             uri == "/api/alarms/test" && post -> {
@@ -146,6 +146,9 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                 AlarmEngine.startRinging(ctx, testAlarm)
                 json(JSONObject().put("ok", true).put("ringing", true))
             }
+
+            uri == "/api/alarms/sounds" -> json(JSONObject()
+                .put("sounds", JSONArray(AlarmAudioPlayer.getAvailableSounds(ctx))))
 
             uri.startsWith("/api/alarms/") && post -> {
                 val id = uri.removePrefix("/api/alarms/")
@@ -159,16 +162,18 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                 json(JSONObject().put("ok", true).put("alarms", store.alarms()))
             }
 
-            uri == "/api/alarms/sounds" -> json(JSONObject()
-                .put("sounds", JSONArray(AlarmAudioPlayer.getAvailableSounds(ctx))))
-
             uri == "/api/settings" && post -> {
                 val b = body(s)
                 store.updateSettings(b)
                 if (b.has("proximityGestures")) {
                     DockService.instance?.proximityEngine?.setEnabled(store.proximityGestures)
                 }
-                Screen.setTimeout(store.timeoutSec); HourlyWake.schedule(ctx)
+                try {
+                    Screen.setTimeout(store.timeoutSec)
+                    HourlyWake.schedule(ctx)
+                } catch (e: Exception) {
+                    AppLogger.w("DockServer", "Failed applying screen timeout/hourly wake: ${e.message}")
+                }
                 MainActivity.instance?.reloadWebSettings()
                 json(store.settings())
             }
@@ -214,14 +219,18 @@ class DockServer(private val ctx: Context, private val store: Store) : NanoHTTPD
                     return res
                 }
                 val tmpFile = java.io.File(ctx.cacheDir, "screen_snap.png")
-                Root.sh("screencap -p ${tmpFile.absolutePath}")
+                Root.sh("screencap -p ${tmpFile.absolutePath}", 4)
                 if (tmpFile.exists() && tmpFile.length() > 0) {
-                    val fis = java.io.FileInputStream(tmpFile)
-                    val res = newFixedLengthResponse(Response.Status.OK, "image/png", fis, tmpFile.length())
-                    res.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-                    res.addHeader("Pragma", "no-cache")
-                    res.addHeader("Expires", "0")
-                    res
+                    try {
+                        val bytes = tmpFile.readBytes()
+                        val res = newFixedLengthResponse(Response.Status.OK, "image/png", java.io.ByteArrayInputStream(bytes), bytes.size.toLong())
+                        res.addHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                        res.addHeader("Pragma", "no-cache")
+                        res.addHeader("Expires", "0")
+                        res
+                    } catch (e: Exception) {
+                        err(Response.Status.INTERNAL_ERROR, "failed reading snapshot: ${e.message}")
+                    }
                 } else {
                     err(Response.Status.INTERNAL_ERROR, "failed to capture snapshot")
                 }
